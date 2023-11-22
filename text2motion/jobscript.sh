@@ -34,5 +34,7 @@ nvidia-smi
 module load cuda/10.1
 module load cudnn/v7.6.5.32-prod-cuda-10.1
 
+echo "checking python bin location"
+which python3
 echo "training txt2motion diffusion model..."
 make train

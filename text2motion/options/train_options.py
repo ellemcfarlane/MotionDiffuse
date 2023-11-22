@@ -23,4 +23,6 @@ class TrainCompOptions(BaseOptions):
         self.parser.add_argument('--save_every_e', type=int, default=5, help='Frequency of saving models (by epoch)')
         self.parser.add_argument('--eval_every_e', type=int, default=5, help='Frequency of animation results (by epoch)')
         self.parser.add_argument('--save_latest', type=int, default=500, help='Frequency of saving models (by iteration)')
+        self.parser.add_argument('--use_wandb', action='store_true', help='whether to log with wandb')
+        self.parser.add_argument('--wandb_user', type=str, default='text2motion', help='wandb user name')
         self.is_train = True

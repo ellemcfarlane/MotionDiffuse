@@ -11,7 +11,7 @@ from utils.utils import print_current_loss
 from os.path import join as pjoin
 import codecs as cs
 import torch.distributed as dist
-
+import wandb
 
 from mmcv.runner import get_dist_info
 from models.gaussian_diffusion import (
@@ -212,7 +212,12 @@ class DDPMTrainer(object):
                         mean_loss[tag] = value / self.opt.log_every
                     logs = OrderedDict()
                     print_current_loss(start_time, it, mean_loss, epoch, inner_iter=i)
-
+                    if self.opt.use_wandb:
+                        print(f"logging loss w wandb {mean_loss['loss_mot_rec']:.4f}")
+                        perf_dict = {
+                            'loss_mot_rec': mean_loss['loss_mot_rec']
+                        }
+                        wandb.log(perf_dict)
                 if it % self.opt.save_latest == 0 and rank == 0:
                     self.save(pjoin(self.opt.model_dir, 'latest.tar'), epoch, it)
 

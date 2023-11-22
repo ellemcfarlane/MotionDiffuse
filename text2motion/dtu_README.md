@@ -10,6 +10,10 @@ now continue as normal:
 * module load cudnn/v7.6.5.32-prod-cuda-10.1
 * conda install pytorch=1.7.1 torchvision=0.8.2 cudatoolkit=10.1 -c pytorch
 * python3 -m pip install "mmcv-full>=1.3.17,<=1.5.3" -f https://download.openmmlab.com/mmcv/dist/cu101/torch1.7.1/index.html
+* python3 -m pip install -r requirements.txt
+* python3 -m pip install --upgrade protobuf==3.20.0
+
+fyi there is an annoying warning in the logs (https://stackoverflow.com/questions/57381430/synonym-of-type-is-deprecated-in-a-future-version-of-numpy-it-will-be-underst) that can be silenced by downgrading numpy:to 1.16.4 BUT this is incompatible with the other package versions, so don't do it
 
 fyi:
 (/work3/s222376/MotionDiffuseNew) s222376@n-62-20-1 /work3/s222376/MotionDiffuse/text2motion (train_baseline)$ module list
@@ -35,7 +39,10 @@ text2motion/data/KIT-ML
 --all.txt
 --<etc>
 ```
+* voltash (dtu hpc command to go to interactive gpu node)
 * make train
+* verify above works without errors and then kill training because you're on interactive gpu, you will likely run out of memory anyway (can decrease --batchsize but then it's slow)
+* to do full training, edit jobscript.sh to use your email and submit job via "make queue"
 
 ## INFERENCE with pretrained model
 * download...checkpoints?? idk look at their README.md

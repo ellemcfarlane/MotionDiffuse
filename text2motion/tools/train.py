@@ -15,7 +15,7 @@ from mmcv.runner import get_dist_info, init_dist
 from mmcv.parallel import MMDistributedDataParallel, MMDataParallel
 import torch
 import torch.distributed as dist
-
+import wandb
 
 def build_models(opt, dim_pose):
     encoder = MotionTransformer(
@@ -46,7 +46,20 @@ if __name__ == '__main__':
         os.makedirs(opt.meta_dir, exist_ok=True)
     if world_size > 1:
         dist.barrier()
-
+    if opt.use_wandb:
+        wandb_id = wandb.util.generate_id()
+        wandb.init(
+            project="text2motion",
+            name="MotionDiffuse",
+            entity=opt.wandb_user,
+            # notes=opt.EXPERIMENT_NOTE,
+            config=opt,
+            id=wandb_id,
+            resume="allow",
+            # monitor_gym=True,
+            sync_tensorboard=True,
+        )
+        # opt.wandb = wandb
     if opt.dataset_name == 't2m':
         opt.data_root = './data/HumanML3D'
         opt.motion_dir = pjoin(opt.data_root, 'new_joint_vecs')
