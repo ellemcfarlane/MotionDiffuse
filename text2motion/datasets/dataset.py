@@ -24,14 +24,18 @@ class Text2MotionDataset(data.Dataset):
 
         data_dict = {}
         id_list = []
+        print(f"split file: {split_file}")
         with cs.open(split_file, 'r') as f:
             for line in f.readlines():
                 id_list.append(line.strip())
 
         new_name_list = []
         length_list = []
+        print(f"id-list length: {len(id_list)}")
         for name in tqdm(id_list):
             try:
+                # attempting to load motion for M03204 at ./data/KIT-ML/new_joint_vecs/M03204.npy
+                # print(f"attempting to load motion for {name} at {pjoin(opt.motion_dir, name + '.npy')}")
                 motion = np.load(pjoin(opt.motion_dir, name + '.npy'))
                 if (len(motion)) < min_motion_len or (len(motion) >= 200):
                     continue
@@ -75,8 +79,10 @@ class Text2MotionDataset(data.Dataset):
             except:
                 # Some motion may not exist in KIT dataset
                 pass
+                # print(f"failed to load motion for {name}")
 
-
+        if not new_name_list or not length_list:
+            raise ValueError(f'No data loaded, new_name_list has len {len(new_name_list)} and length_list has len {len(length_list)}')
         name_list, length_list = zip(*sorted(zip(new_name_list, length_list), key=lambda x: x[1]))
 
         if opt.is_train:

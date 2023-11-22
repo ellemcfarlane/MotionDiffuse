@@ -35,29 +35,7 @@ E.g., install PyTorch 1.7.1 & CUDA 10.1.
 ```shell
 conda install pytorch=1.7.1 torchvision cudatoolkit=10.1 -c pytorch
 ```
-ELLE GOT WORKING WITH
-torch                    2.1.0
-torchvision              0.16.0
-mmcv-full                1.5.3
-mpmath                   1.3.0
-multidict                6.0.4
-murmurhash               1.0.10
-nest-asyncio             1.5.8
-networkx                 3.1
-numpy                    1.24.4
-nvidia-cublas-cu12       12.1.3.1
-nvidia-cuda-cupti-cu12   12.1.105
-nvidia-cuda-nvrtc-cu12   12.1.105
-nvidia-cuda-runtime-cu12 12.1.105
-nvidia-cudnn-cu12        8.9.2.26
-nvidia-cufft-cu12        11.0.2.54
-nvidia-curand-cu12       10.3.2.106
-nvidia-cusolver-cu12     11.4.5.107
-nvidia-cusparse-cu12     12.1.0.106
-nvidia-nccl-cu12         2.18.1
-nvidia-nvjitlink-cu12    12.3.52
-nvidia-nvtx-cu12         12.1.105
-Python 3.6.8 OR /appl/python/3.8.17/bin/python3???
+
 **Important:** Make sure that your compilation CUDA version and runtime CUDA version match.
 
 c. Build mmcv-full

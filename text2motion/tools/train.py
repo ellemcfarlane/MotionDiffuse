@@ -1,6 +1,8 @@
 import os
 from os.path import join as pjoin
-
+# print cwd
+import sys
+sys.path.append(os.getcwd())
 import utils.paramUtil as paramUtil
 from options.train_options import TrainCompOptions
 from utils.plot_script import *
@@ -33,7 +35,8 @@ if __name__ == '__main__':
 
     opt.device = torch.device("cuda")
     torch.autograd.set_detect_anomaly(True)
-
+    print(f"device id: {torch.cuda.current_device()}")
+    print(f"selected device ids: {opt.gpu_id}")
     opt.save_root = pjoin(opt.checkpoints_dir, opt.dataset_name, opt.name)
     opt.model_dir = pjoin(opt.save_root, 'model')
     opt.meta_dir = pjoin(opt.save_root, 'meta')
@@ -83,7 +86,8 @@ if __name__ == '__main__':
     std = np.load(pjoin(opt.data_root, 'Std.npy'))
 
     train_split_file = pjoin(opt.data_root, 'train.txt')
-
+    print(f"cwd is {os.getcwd()}")
+    print(f"train_split_file: {train_split_file}")
     encoder = build_models(opt, dim_pose)
     if world_size > 1:
         encoder = MMDistributedDataParallel(
