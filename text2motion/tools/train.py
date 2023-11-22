@@ -54,6 +54,16 @@ if __name__ == '__main__':
         opt.max_motion_length = 196
         dim_pose = 263
         kinematic_chain = paramUtil.t2m_kinematic_chain
+    elif opt.dataset_name == 'grab':
+        opt.data_root = '/work3/s222376/diffusion_bodies/data/face_motion_data/smplx_322/GRAB'
+        opt.motion_dir = pjoin(opt.data_root, 'new_joint_vecs')
+        opt.text_dir = pjoin(opt.data_root, 'texts')
+        opt.joints_num = 22
+        radius = 4
+        fps = 20
+        dim_pose = 263
+        opt.max_motion_length = 196
+        kinematic_chain = paramUtil.grab_kinematic_chain
     elif opt.dataset_name == 'kit':
         opt.data_root = './data/KIT-ML'
         opt.motion_dir = pjoin(opt.data_root, 'new_joint_vecs')

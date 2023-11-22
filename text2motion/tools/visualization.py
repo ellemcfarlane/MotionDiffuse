@@ -21,6 +21,9 @@ def plot_t2m(data, result_path, npy_path, caption):
     joint = recover_from_ric(torch.from_numpy(data).float(), opt.joints_num).numpy()
     joint = motion_temporal_filter(joint, sigma=1)
     plot_3d_motion(result_path, paramUtil.t2m_kinematic_chain, joint, title=caption, fps=20)
+    print(f"saving to {result_path}")
+    caption_str = caption.replace(" ", "_")
+    result_path += f"_{caption_str}.gif"
     if npy_path != "":
         np.save(npy_path, joint)
 
@@ -37,6 +40,7 @@ def build_models(opt):
 
 
 if __name__ == '__main__':
+    print("visualization started")
     parser = argparse.ArgumentParser()
     parser.add_argument('--opt_path', type=str, help='Opt path')
     parser.add_argument('--text', type=str, default="", help='Text description for motion generation')
@@ -63,6 +67,7 @@ if __name__ == '__main__':
 
     mean = np.load(pjoin(opt.meta_dir, 'mean.npy'))
     std = np.load(pjoin(opt.meta_dir, 'std.npy'))
+    print(f"mean shape: {mean.shape}, std shape: {std.shape}")
 
     encoder = build_models(opt).to(device)
     trainer = DDPMTrainer(opt, encoder)
@@ -80,4 +85,5 @@ if __name__ == '__main__':
             motion = pred_motions[0].cpu().numpy()
             motion = motion * std + mean
             title = args.text + " #%d" % motion.shape[0]
+            print("trying to plot")
             plot_t2m(motion, args.result_path, args.npy_path, title)
