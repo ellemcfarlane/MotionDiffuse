@@ -1,6 +1,6 @@
 import logging as log
 import os
-# import arraylike from numpy
+from os.path import join as pjoin
 from typing import Dict, Optional, Tuple
 
 import numpy as np
@@ -23,24 +23,38 @@ MOTION_DIR = f"{DATA_DIR}/motion_data/smplx_322"
 ACTION_LABEL_DIR = f"{DATA_DIR}/semantic_labels"
 EMOTION_LABEL_DIR = f"{DATA_DIR}/face_texts"
 
+
+"""
+Page 12 of https://arxiv.org/pdf/2307.00818.pdf shows:
+
+smpl-x = {θb, θh, θf , ψ, r} = 3D body pose, 3D hand pose, jaw pose, facial expression, global root orientation, global translation
+dims: (22x3, 30x3, 1x3, 1x50, 1x3) = (66, 90, 3, 50, 3, 3)
+
+NOTE: I think they are wrong about n_body_joints though, data indicates it's actually 21x3 = 63, not 22x3 = 66
+"""
+
 MY_REPO = os.path.abspath("")
 log.info(f"MY_REPO: {MY_REPO}")
-NUM_BODY_JOINTS = 23 - 2  # SMPL has hand joints but we're replacing them with more detailed ones by SMLP-X
-NUM_HAND_JOINTS = 15
-NUM_FACE_JOINTS = 3
-NUM_JAW_JOINTS = 1
-NUM_JOINTS = NUM_BODY_JOINTS + NUM_HAND_JOINTS * 2 + NUM_FACE_JOINTS
-EXPRESSION_SPACE_DIM = 100
-NUM_EXPRESSION_COEFS = 50  # is this right? why is default 10 in smplx 10?
-NECK_IDX = 12
-BODY_SHAPE_DIM = 10
+NUM_BODY_JOINTS = 23 - 2  # SMPL has hand joints but we're replacing them with more detailed ones by SMLP-X, paper: 22x3 total body dims * not sure why paper says 22
+NUM_JAW_JOINTS = 1 # 1x3 total jaw dims
+# Motion-X paper says there
+NUM_HAND_JOINTS = 15 # x2 for each hand -> 30x3 total hand dims
+NUM_JOINTS = NUM_BODY_JOINTS + NUM_HAND_JOINTS * 2 + NUM_JAW_JOINTS
+NUM_FACIAL_EXPRESSION_DIMS = 50  # as per Motion-X paper, but why is default 10 in smplx code then?
+FACE_SHAPE_DIMS = 100
+BODY_SHAPE_DIMS = 10 # betas
+ROOT_DIMS = 3
+TRANS_DIMS = 3 # same as root, no?
 
-pose_type_to_num_joints = {
-    "pose_body": NUM_BODY_JOINTS,
-    "pose_hand": NUM_HAND_JOINTS * 2,  # both hands
-    "pose_jaw": NUM_JAW_JOINTS,
-    "face_expr": NUM_EXPRESSION_COEFS,  # double check
-    "face_shape": EXPRESSION_SPACE_DIM,  # double check
+pose_type_to_dims = {
+    "pose_body": NUM_BODY_JOINTS * 3,
+    "pose_hand": NUM_HAND_JOINTS * 2 * 3, # both hands
+    "pose_jaw": NUM_JAW_JOINTS * 3,
+    "face_expr": NUM_FACIAL_EXPRESSION_DIMS * 1,  # double check
+    "face_shape": FACE_SHAPE_DIMS * 1,  # double check
+    "root_orient": ROOT_DIMS * 1,
+    "betas": BODY_SHAPE_DIMS * 1,
+    "trans": TRANS_DIMS * 1,
 }
 
 
@@ -96,6 +110,11 @@ def drop_shapes_from_motion_arr(motion_arr: ArrayLike) -> ArrayLike:
     
     return new_motion_arr
 
+def load_label_from_file(file_path: str) -> str:
+    with open(file_path, "r") as file:
+        # Read the contents of the file into a string
+        label = file.read()
+    return label
 
 def load_label(dataset_dir: str, seq: str, file_path: str) -> Dict[str, str]:
     paths = get_label_paths(dataset_dir, seq, file_path)
@@ -144,23 +163,39 @@ def smplx_dict_to_array(smplx_dict):
     smplx_array = torch.cat(smplx_array, dim=1)
     return smplx_array
 
-# if __name__ == "__main__":
-    # data_dir, seq, file = "kungfu", "subset_0000", "Aerial_Kick_Kungfu_Wushu_clip_13"
-    # data_dir, seq, file = "idea400", "subset_0000", "Clean_The_Glass,_Clean_The_Windows_And_Sitting_At_The_Same_Time_clip_1"
-    # data_dir, seq, file = "GRAB_motion", "s1", "airplane_fly_1"
-    # motion = load_data(data_dir, seq, file)
-    # data_root = './data/grab'
-    # motion_dir = pjoin(data_root, 'joints')
-    # motion = np.load(pjoin(motion_dir, name + '.npy'))
-    # n_points = len(motion["pose_body"])
-    # log.info("POSE")
-    # # checks data has expected shape
-    # for key in motion:
-    #     num_joints = motion[key].shape[1] / 3
-    #     exp_n_joints = pose_type_to_num_joints.get(key)
-    #     log.info(f"{key}: {motion[key].shape}, joints {num_joints}, exp: {exp_n_joints}")
+if __name__ == "__main__":
+    data_dir, seq, file = "kungfu", "subset_0000", "Aerial_Kick_Kungfu_Wushu_clip_13"
+    data_dir, seq, file = "idea400", "subset_0000", "Clean_The_Glass,_Clean_The_Windows_And_Sitting_At_The_Same_Time_clip_1"
+    data_dir, seq, file = "GRAB_motion", "s1", "airplane_fly_1"
 
-    # log.info("\nLABELS")
-    # labels = load_label(data_dir, seq, file)
-    # for key in labels:
-    #     log.info(f"{key}: {labels[key]}")
+    name = "s1/airplane_fly_1"
+    data_root = './data/GRAB'
+    motion_dir = pjoin(data_root, 'joints')
+    motion_arr = np.load(pjoin(motion_dir, name + '.npy'))
+    motion_dict = motion_arr_to_dict(motion_arr)
+    n_points = len(motion_dict["pose_body"])
+
+    log.info(f"POSES: {n_points}")
+    # checks data has expected shape
+    tot_dims = 0
+    for key in motion_dict:
+        dims = motion_dict[key].shape[1]
+        exp_dims = pose_type_to_dims.get(key)
+        tot_dims += motion_dict[key].shape[1]
+        log.info(f"{key}: {motion_dict[key].shape}, dims {dims}, exp: {exp_dims}")
+    log.info(f"total MOTION-X dims: {tot_dims}\n")
+
+    timestep_range = (0, n_points)
+    smplx_params = to_smplx_dict(motion_dict, timestep_range)
+    tot_smplx_dims = 0
+    for key in smplx_params:
+        tot_smplx_dims += smplx_params[key].shape[1]
+        log.info(f"{key}: {smplx_params[key].shape}")
+    log.info(f"TOTAL SMPLX dims: {tot_smplx_dims}\n")
+
+    action_label_path = pjoin(data_root, 'texts', name + '.txt')
+    action_label = load_label_from_file(action_label_path)
+    emotion_label_path = pjoin(data_root, 'face_texts', name + '.txt')
+    emotion_label = load_label_from_file(emotion_label_path)
+    log.info(f"action: {action_label}")
+    log.info(f"emotion: {emotion_label}")

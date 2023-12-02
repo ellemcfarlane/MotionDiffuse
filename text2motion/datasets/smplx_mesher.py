@@ -9,7 +9,7 @@ import pyrender
 import smplx
 import trimesh
 
-from .motionx_loader import (MODELS_DIR, MY_REPO, NUM_EXPRESSION_COEFS,
+from .motionx_loader import (MODELS_DIR, MY_REPO, NUM_FACIAL_EXPRESSION_DIMS,
                              load_data_as_dict, load_label, motion_arr_to_dict,
                              pose_type_to_num_joints, to_smplx_dict)
 
@@ -31,8 +31,8 @@ def render_meshes(output, save_offscreen=False, output_dir="render_output"):
         for i in range(0, len(vertices_list)):
             vertices = vertices_list[i]
             joints = joints_list[i]
-            print("Vertices shape =", vertices.shape)
-            print("Joints shape =", joints.shape)
+            # print("Vertices shape =", vertices.shape)
+            # print("Joints shape =", joints.shape)
 
             # from their demo script
             plotting_module = "pyrender"
@@ -46,7 +46,7 @@ def render_meshes(output, save_offscreen=False, output_dir="render_output"):
                 # translation_vector = [0, -0.5, 0]  # [x, y, z] - Change in Y-axis
                 # # Apply translation
                 # tri_mesh.apply_translation(translation_vector)
-                print("Camera pose:")
+                # print("Camera pose:")
                 # print(viewer.viewer_flags.camera_pose)
                 ##### RENDER LOCK #####
                 if not save_offscreen:
@@ -137,10 +137,6 @@ def render_meshes(output, save_offscreen=False, output_dir="render_output"):
 
 
 if __name__ == "__main__":
-    # data_dir, seq, file = "kungfu", "subset_0000", "Aerial_Kick_Kungfu_Wushu_clip_13"
-    # data_dir, seq, file = "idea400", "subset_0000", "Clean_The_Glass,_Clean_The_Windows_And_Sitting_At_The_Same_Time_clip_1"
-    # data_dir, seq, file = "GRAB", "s1", "airplane_fly_1"
-    # motion = load_data(data_dir, seq, file)
     name = "s1/airplane_fly_1"
     data_root = './data/GRAB'
     motion_dir = pjoin(data_root, 'joints')
@@ -177,33 +173,38 @@ if __name__ == "__main__":
 
     timestep_range = (min_t, max_t)
     smplx_params = to_smplx_dict(motion_dict, timestep_range)
+    tot_smplx_dims = 0
     for key in smplx_params:
+        tot_smplx_dims += smplx_params[key].shape[1]
         print(f"{key}: {smplx_params[key].shape}")
+    log.info(f"TOTAL SMPLX dims: {tot_smplx_dims}")
     model_folder = os.path.join(MY_REPO, MODELS_DIR, "smplx")
     batch_size = max_t - min_t
     log.info(f"calculating mesh with batch size {batch_size}")
     model = smplx.SMPLX(
         model_folder,
         use_pca=False,  # our joints are not in pca space
-        num_expression_coeffs=NUM_EXPRESSION_COEFS,
+        num_expression_coeffs=NUM_FACIAL_EXPRESSION_DIMS,
         batch_size=batch_size,
     )
     output = model.forward(**smplx_params, return_verts=True)
     log.info(f"output size {output.vertices.shape}")
     log.info(f"output size {output.joints.shape}")
     log.info("rendering mesh")
-    render_meshes(output)
+    # render_meshes(output)
     log.warning(
         "if you don't see the mesh animation, make sure you are running on graphics compatible DTU machine (vgl xterm)."
     )
 
     log.info(f"POSES: {n_points}")
     # checks data has expected shape
+    tot_dims = 0
     for key in motion_dict:
         num_joints = motion_dict[key].shape[1] / 3
         exp_n_joints = pose_type_to_num_joints.get(key)
+        tot_dims += motion_dict[key].shape[1]
         log.info(f"{key}: {motion_dict[key].shape}, joints {num_joints}, exp: {exp_n_joints}")
-
+    log.info(f"total dims: {tot_dims}")
     # log.info("\nLABELS")
     # labels = load_label(data_dir, seq, file)
     # for key in labels:
