@@ -40,7 +40,6 @@ class Text2MotionDataset(data.Dataset):
                 # attempting to load motion for M03204 at ./data/KIT-ML/new_joint_vecs/M03204.npy
                 print(f"attempting to load motion for {name} at {pjoin(opt.motion_dir, name + '.npy')}")
                 motion = np.load(pjoin(opt.motion_dir, name + '.npy'))
-                import pdb; pdb.set_trace()
                 if self.opt.dataset_name.lower() == 'grab':
                     motion = drop_shapes_from_motion_arr(motion)
                     assert motion.shape[-1] == opt.dim_pose, f"motion shape {motion.shape} does not match dim_pose {opt.dim_pose}"

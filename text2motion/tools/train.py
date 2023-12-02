@@ -6,11 +6,11 @@ from os.path import join as pjoin
 sys.path.append(os.getcwd())
 import torch
 import torch.distributed as dist
-import wandb
 from mmcv.parallel import MMDataParallel, MMDistributedDataParallel
 from mmcv.runner import get_dist_info, init_dist
 
 import utils.paramUtil as paramUtil
+import wandb
 from datasets import Text2MotionDataset
 from models import MotionTransformer
 from options.train_options import TrainCompOptions
@@ -72,21 +72,21 @@ if __name__ == '__main__':
         dim_pose = 263
         kinematic_chain = paramUtil.t2m_kinematic_chain
     elif opt.dataset_name == 'grab':
-        opt.data_root = './data/grab'
+        opt.data_root = './data/GRAB'
         opt.motion_dir = pjoin(opt.data_root, 'joints')
         opt.text_dir = pjoin(opt.data_root, 'texts')
         opt.joints_num = 72 # TODO (elmc): verify this BUT ALSO I'M NOT USING IT FOR NOW!
-        radius = 4 # TODO (elmc): verify this, think it's only for visualization purposes
-        fps = 20 # TODO (elmc): verify this
+        # radius = 4 # TODO (elmc): verify this, think it's only for visualization purposes
+        # fps = 20 # TODO (elmc): verify this, also for visualization I think
         dim_pose = 212 # drop betas (body shape) and face-shape from Motion data (via to_smplx_params & smplx_dict_to_array method)
         opt.dim_pose = dim_pose
-        opt.max_motion_length = 400  # TODO (elmc): verify this
+        # opt.max_motion_length = 400  # TODO (elmc): verify this
         # TODO (elmc): verify what this does and if we can use the t2m one
         # NOTE: think, again, it's only for visualization
-        kinematic_chain = paramUtil.t2m_kinematic_chain
+        # kinematic_chain = paramUtil.t2m_kinematic_chain
         # kinematic_chain = paramUtil.grab_kinematic_chain
         print(f"loading data root: {opt.data_root}")
-        print(f"kinematic chain: {kinematic_chain}")
+        # print(f"kinematic chain: {kinematic_chain}")
     elif opt.dataset_name == 'kit':
         opt.data_root = './data/KIT-ML'
         opt.motion_dir = pjoin(opt.data_root, 'new_joint_vecs')
@@ -103,7 +103,7 @@ if __name__ == '__main__':
 
     # TODO (elmc): check dim_word???
     dim_word = 300
-    # TODO (elmc): replace witha ctual mean and std of *training* data
+    # TODO (elmc): replace with actual mean and std of *training* data
     mean = np.load(pjoin(opt.data_root, 'Mean.npy'))
     std = np.load(pjoin(opt.data_root, 'Std.npy'))
 

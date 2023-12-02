@@ -15,9 +15,8 @@ train:
 	--diffusion_steps 1000 \
 	--data_parallel \
 	--gpu_id 0 \
-
-# --use_wandb \
-# --wandb_user "elles" \
+	--use_wandb \
+	--wandb_user "elles" \
 
 queue:
 	cd ${ROOT_DIR} && bsub < jobscript.sh

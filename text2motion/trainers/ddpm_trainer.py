@@ -8,11 +8,11 @@ import torch
 import torch.distributed as dist
 import torch.nn.functional as F
 import torch.optim as optim
-import wandb
 from mmcv.runner import get_dist_info
 from torch.nn.utils import clip_grad_norm_
 from torch.utils.data import DataLoader
 
+import wandb
 from datasets import build_dataloader
 from models.gaussian_diffusion import (GaussianDiffusion, LossType,
                                        ModelMeanType, ModelVarType,
@@ -181,7 +181,6 @@ class DDPMTrainer(object):
 
         start_time = time.time()
 
-        import pdb; pdb.set_trace()
         train_loader = build_dataloader(
             train_dataset,
             samples_per_gpu=self.opt.batch_size,
@@ -193,10 +192,11 @@ class DDPMTrainer(object):
 
         logs = OrderedDict()
         for epoch in range(cur_epoch, self.opt.num_epochs):
+            print(f"epoch {epoch}, logging to wandb every {self.opt.log_every} iters")
             self.train_mode()
-            import pdb; pdb.set_trace()
             for i, batch_data in enumerate(train_loader):
-                import pdb; pdb.set_trace()
+                print(f"epoch {epoch}, batch {i}")
+                # import pdb; pdb.set_trace()
                 self.forward(batch_data)
                 log_dict = self.update()
                 for k, v in log_dict.items():
