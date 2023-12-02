@@ -1,7 +1,8 @@
 import os
-from argparse import Namespace
 import re
+from argparse import Namespace
 from os.path import join as pjoin
+
 from utils.word_vectorizer import POS_enumerator
 
 
@@ -78,10 +79,20 @@ def get_opt(opt_path, device):
         opt.joints_num = 21
         opt.dim_pose = 251
         opt.max_motion_length = 196
+    elif opt.dataset_name == 'grab':
+        opt.data_root = './data/GRAB'
+        opt.motion_dir = pjoin(opt.data_root, 'joints')
+        opt.text_dir = pjoin(opt.data_root, 'texts')
+        # opt.joints_num = 72 # TODO (elmc): verify this BUT ALSO I'M NOT USING IT FOR NOW!
+        opt.dim_pose = 212 # drop betas (body shape) and face-shape from Motion data (via to_smplx_params & smplx_dict_to_array method)
+        # TOOD (elmc): verify this
+        opt.max_motion_length = 400
     else:
         raise KeyError('Dataset not recognized')
 
+    # TODO (elmc): is dim_word ever actually used?
     opt.dim_word = 300
+    # TODO (elmc): what is num classes for GRAB?
     opt.num_classes = 200 // opt.unit_length
     opt.dim_pos_ohot = len(POS_enumerator)
     opt.is_train = False

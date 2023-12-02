@@ -9,9 +9,9 @@ import pyrender
 import smplx
 import trimesh
 
-from .motionx_loader import (MODELS_DIR, MY_REPO, NUM_FACIAL_EXPRESSION_DIMS,
-                             load_label_from_file, motion_arr_to_dict,
-                             pose_type_to_dims, to_smplx_dict)
+from .motionx_explorer import (MODELS_DIR, MY_REPO, NUM_FACIAL_EXPRESSION_DIMS,
+                               load_label_from_file, motion_arr_to_dict,
+                               pose_type_to_dims, to_smplx_dict)
 
 
 def render_meshes(output, save_offscreen=False, output_dir="render_output"):

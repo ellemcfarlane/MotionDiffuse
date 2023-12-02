@@ -8,7 +8,7 @@ import torch
 from torch.utils import data
 from tqdm import tqdm
 
-from .motionx_loader import drop_shapes_from_motion_arr
+from .motionx_explorer import drop_shapes_from_motion_arr
 
 
 class Text2MotionDataset(data.Dataset):
