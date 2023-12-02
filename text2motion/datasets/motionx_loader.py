@@ -172,6 +172,10 @@ if __name__ == "__main__":
     data_root = './data/GRAB'
     motion_dir = pjoin(data_root, 'joints')
     motion_arr = np.load(pjoin(motion_dir, name + '.npy'))
+    # directly get smplx dimensionality by dropping body and face shape data
+    # motion_arr_smplx_dims = drop_shapes_from_motion_arr(motion_arr)
+
+
     motion_dict = motion_arr_to_dict(motion_arr)
     n_points = len(motion_dict["pose_body"])
 
