@@ -11,7 +11,7 @@ import trimesh
 
 from .motionx_loader import (MODELS_DIR, MY_REPO, NUM_FACIAL_EXPRESSION_DIMS,
                              load_label_from_file, motion_arr_to_dict,
-                             pose_type_to_num_joints, to_smplx_dict)
+                             pose_type_to_dims, to_smplx_dict)
 
 
 def render_meshes(output, save_offscreen=False, output_dir="render_output"):
@@ -191,7 +191,7 @@ if __name__ == "__main__":
     log.info(f"output size {output.vertices.shape}")
     log.info(f"output size {output.joints.shape}")
     log.info("rendering mesh")
-    # render_meshes(output)
+    render_meshes(output)
     log.warning(
         "if you don't see the mesh animation, make sure you are running on graphics compatible DTU machine (vgl xterm)."
     )
@@ -201,7 +201,7 @@ if __name__ == "__main__":
     tot_dims = 0
     for key in motion_dict:
         num_joints = motion_dict[key].shape[1] / 3
-        exp_n_joints = pose_type_to_num_joints.get(key)
+        exp_n_joints = pose_type_to_dims.get(key)
         tot_dims += motion_dict[key].shape[1]
         log.info(f"{key}: {motion_dict[key].shape}, joints {num_joints}, exp: {exp_n_joints}")
     log.info(f"total MOTION-X dims: {tot_dims}")
