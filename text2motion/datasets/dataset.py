@@ -1,11 +1,14 @@
+import codecs as cs
+import os
+import random
+from os.path import join as pjoin
+
+import numpy as np
 import torch
 from torch.utils import data
-import numpy as np
-import os
-from os.path import join as pjoin
-import random
-import codecs as cs
 from tqdm import tqdm
+
+from .motionx_loader import drop_shapes_from_motion_arr
 
 
 class Text2MotionDataset(data.Dataset):
@@ -35,10 +38,18 @@ class Text2MotionDataset(data.Dataset):
         for name in tqdm(id_list):
             try:
                 # attempting to load motion for M03204 at ./data/KIT-ML/new_joint_vecs/M03204.npy
-                # print(f"attempting to load motion for {name} at {pjoin(opt.motion_dir, name + '.npy')}")
+                print(f"attempting to load motion for {name} at {pjoin(opt.motion_dir, name + '.npy')}")
                 motion = np.load(pjoin(opt.motion_dir, name + '.npy'))
-                if (len(motion)) < min_motion_len or (len(motion) >= 200):
-                    continue
+                import pdb; pdb.set_trace()
+                if self.opt.dataset_name.lower() == 'grab':
+                    motion = drop_shapes_from_motion_arr(motion)
+                    assert motion.shape[-1] == opt.dim_pose, f"motion shape {motion.shape} does not match dim_pose {opt.dim_pose}"
+                    print(f"grab motion shape: {motion.shape}")
+                print(f"len of motion: {len(motion)}")
+                # import pdb; pdb.set_trace()
+                # TODO (elmc): verify we don't need this for GRAB data
+                # if (len(motion)) < min_motion_len or (len(motion) >= 200):
+                #     continue
                 text_data = []
                 flag = False
                 with cs.open(pjoin(opt.text_dir, name + '.txt')) as f:
@@ -46,11 +57,16 @@ class Text2MotionDataset(data.Dataset):
                         text_dict = {}
                         line_split = line.strip().split('#')
                         caption = line_split[0]
-                        tokens = line_split[1].split(' ')
-                        f_tag = float(line_split[2])
-                        to_tag = float(line_split[3])
-                        f_tag = 0.0 if np.isnan(f_tag) else f_tag
-                        to_tag = 0.0 if np.isnan(to_tag) else to_tag
+                        f_tag = 0.0
+                        to_tag = 0.0
+                        # TODO (elmc): add actual tokens back for grab
+                        tokens = []
+                        if self.opt.dataset_name.lower() != 'grab':
+                            tokens = line_split[1].split(' ')
+                            f_tag = float(line_split[2])
+                            to_tag = float(line_split[3])
+                            f_tag = 0.0 if np.isnan(f_tag) else f_tag
+                            to_tag = 0.0 if np.isnan(to_tag) else to_tag
 
                         text_dict['caption'] = caption
                         text_dict['tokens'] = tokens
@@ -76,41 +92,43 @@ class Text2MotionDataset(data.Dataset):
                                        'text':text_data}
                     new_name_list.append(name)
                     length_list.append(len(motion))
-            except:
+            except Exception as e:
                 # Some motion may not exist in KIT dataset
-                pass
-                # print(f"failed to load motion for {name}")
+                print(f"failed to load motion for {name} at {pjoin(opt.motion_dir, name + '.npy')} due to {e}")
 
         if not new_name_list or not length_list:
             raise ValueError(f'No data loaded, new_name_list has len {len(new_name_list)} and length_list has len {len(length_list)}')
         name_list, length_list = zip(*sorted(zip(new_name_list, length_list), key=lambda x: x[1]))
+        print(f"LOADED length of name_list: {len(name_list)}")
+        # TODO (elmc): calculate mean and std and save to load here?
+        # if opt.is_train:
+        #     # TODO (elle): how best to standardize the data?
 
-        if opt.is_train:
-            # root_rot_velocity (B, seq_len, 1)
-            std[0:1] = std[0:1] / opt.feat_bias
-            # root_linear_velocity (B, seq_len, 2)
-            std[1:3] = std[1:3] / opt.feat_bias
-            # root_y (B, seq_len, 1)
-            std[3:4] = std[3:4] / opt.feat_bias
-            # ric_data (B, seq_len, (joint_num - 1)*3)
-            std[4: 4 + (joints_num - 1) * 3] = std[4: 4 + (joints_num - 1) * 3] / 1.0
-            # rot_data (B, seq_len, (joint_num - 1)*6)
-            std[4 + (joints_num - 1) * 3: 4 + (joints_num - 1) * 9] = std[4 + (joints_num - 1) * 3: 4 + (
-                        joints_num - 1) * 9] / 1.0
-            # local_velocity (B, seq_len, joint_num*3)
-            std[4 + (joints_num - 1) * 9: 4 + (joints_num - 1) * 9 + joints_num * 3] = std[
-                                                                                       4 + (joints_num - 1) * 9: 4 + (
-                                                                                                   joints_num - 1) * 9 + joints_num * 3] / 1.0
-            # foot contact (B, seq_len, 4)
-            std[4 + (joints_num - 1) * 9 + joints_num * 3:] = std[
-                                                              4 + (joints_num - 1) * 9 + joints_num * 3:] / opt.feat_bias
+        #     # root_rot_velocity (B, seq_len, 1)
+        #     std[0:1] = std[0:1] / opt.feat_bias
+        #     # root_linear_velocity (B, seq_len, 2)
+        #     std[1:3] = std[1:3] / opt.feat_bias
+        #     # root_y (B, seq_len, 1)
+        #     std[3:4] = std[3:4] / opt.feat_bias
+        #     # ric_data (B, seq_len, (joint_num - 1)*3)
+        #     std[4: 4 + (joints_num - 1) * 3] = std[4: 4 + (joints_num - 1) * 3] / 1.0
+        #     # rot_data (B, seq_len, (joint_num - 1)*6)
+        #     std[4 + (joints_num - 1) * 3: 4 + (joints_num - 1) * 9] = std[4 + (joints_num - 1) * 3: 4 + (
+        #                 joints_num - 1) * 9] / 1.0
+        #     # local_velocity (B, seq_len, joint_num*3)
+        #     std[4 + (joints_num - 1) * 9: 4 + (joints_num - 1) * 9 + joints_num * 3] = std[
+        #                                                                                4 + (joints_num - 1) * 9: 4 + (
+        #                                                                                            joints_num - 1) * 9 + joints_num * 3] / 1.0
+        #     # foot contact (B, seq_len, 4)
+        #     std[4 + (joints_num - 1) * 9 + joints_num * 3:] = std[
+        #                                                       4 + (joints_num - 1) * 9 + joints_num * 3:] / opt.feat_bias
 
-            assert 4 + (joints_num - 1) * 9 + joints_num * 3 + 4 == mean.shape[-1]
-            np.save(pjoin(opt.meta_dir, 'mean.npy'), mean)
-            np.save(pjoin(opt.meta_dir, 'std.npy'), std)
+            # assert 4 + (joints_num - 1) * 9 + joints_num * 3 + 4 == mean.shape[-1]
+            # np.save(pjoin(opt.meta_dir, 'mean.npy'), mean)
+            # np.save(pjoin(opt.meta_dir, 'std.npy'), std)
 
-        self.mean = mean
-        self.std = std
+        # self.mean = mean
+        # self.std = std
         self.length_arr = np.array(length_list)
         self.data_dict = data_dict
         self.name_list = name_list
@@ -131,7 +149,6 @@ class Text2MotionDataset(data.Dataset):
         # Randomly select a caption
         text_data = random.choice(text_list)
         caption = text_data['caption']
-
         max_motion_length = self.opt.max_motion_length
         if m_length >= self.opt.max_motion_length:
             idx = random.randint(0, len(motion) - max_motion_length)
@@ -144,7 +161,8 @@ class Text2MotionDataset(data.Dataset):
 
         assert len(motion) == max_motion_length
         "Z Normalization"
-        motion = (motion - self.mean) / self.std
+        # TODO (elmc): add standardization back in
+        # motion = (motion - self.mean) / self.std
 
         if self.eval_mode:
             tokens = text_data['tokens']

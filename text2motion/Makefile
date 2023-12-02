@@ -6,17 +6,18 @@ run:
 
 train:
 	cd ${ROOT_DIR} && ${PYTHON_BIN} -m tools.train \
-	--name kit_baseline_dp_2gpu_8layers_1000 \
-	--batch_size 64 \
+	--name grab_baseline_dp_2gpu_8layers_1000 \
+	--batch_size 1 \
 	--times 50 \
 	--num_epochs 50 \
-	--dataset_name kit \
+	--dataset_name grab \
 	--num_layers 8 \
 	--diffusion_steps 1000 \
 	--data_parallel \
-	--gpu_id 0 1 \
-	--use_wandb \
-	--wandb_user "elles" \
+	--gpu_id 0 \
+
+# --use_wandb \
+# --wandb_user "elles" \
 
 queue:
 	cd ${ROOT_DIR} && bsub < jobscript.sh

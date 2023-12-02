@@ -1,29 +1,25 @@
-import torch
-import torch.nn.functional as F
+import codecs as cs
 import random
 import time
-from models.transformer import MotionTransformer
-from torch.utils.data import DataLoader
-import torch.optim as optim
-from torch.nn.utils import clip_grad_norm_
 from collections import OrderedDict
-from utils.utils import print_current_loss
 from os.path import join as pjoin
-import codecs as cs
-import torch.distributed as dist
-import wandb
 
+import torch
+import torch.distributed as dist
+import torch.nn.functional as F
+import torch.optim as optim
+import wandb
 from mmcv.runner import get_dist_info
-from models.gaussian_diffusion import (
-    GaussianDiffusion,
-    get_named_beta_schedule,
-    create_named_schedule_sampler,
-    ModelMeanType,
-    ModelVarType,
-    LossType
-)
+from torch.nn.utils import clip_grad_norm_
+from torch.utils.data import DataLoader
 
 from datasets import build_dataloader
+from models.gaussian_diffusion import (GaussianDiffusion, LossType,
+                                       ModelMeanType, ModelVarType,
+                                       create_named_schedule_sampler,
+                                       get_named_beta_schedule)
+from models.transformer import MotionTransformer
+from utils.utils import print_current_loss
 
 
 class DDPMTrainer(object):
@@ -185,6 +181,7 @@ class DDPMTrainer(object):
 
         start_time = time.time()
 
+        import pdb; pdb.set_trace()
         train_loader = build_dataloader(
             train_dataset,
             samples_per_gpu=self.opt.batch_size,
@@ -197,7 +194,9 @@ class DDPMTrainer(object):
         logs = OrderedDict()
         for epoch in range(cur_epoch, self.opt.num_epochs):
             self.train_mode()
+            import pdb; pdb.set_trace()
             for i, batch_data in enumerate(train_loader):
+                import pdb; pdb.set_trace()
                 self.forward(batch_data)
                 log_dict = self.update()
                 for k, v in log_dict.items():
