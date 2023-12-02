@@ -10,7 +10,7 @@ import smplx
 import trimesh
 
 from .motionx_loader import (MODELS_DIR, MY_REPO, NUM_FACIAL_EXPRESSION_DIMS,
-                             load_data_as_dict, load_label, motion_arr_to_dict,
+                             load_label_from_file, motion_arr_to_dict,
                              pose_type_to_num_joints, to_smplx_dict)
 
 
@@ -177,7 +177,7 @@ if __name__ == "__main__":
     for key in smplx_params:
         tot_smplx_dims += smplx_params[key].shape[1]
         print(f"{key}: {smplx_params[key].shape}")
-    log.info(f"TOTAL SMPLX dims: {tot_smplx_dims}")
+    log.info(f"total SMPL-X dims: {tot_smplx_dims}")
     model_folder = os.path.join(MY_REPO, MODELS_DIR, "smplx")
     batch_size = max_t - min_t
     log.info(f"calculating mesh with batch size {batch_size}")
@@ -204,8 +204,11 @@ if __name__ == "__main__":
         exp_n_joints = pose_type_to_num_joints.get(key)
         tot_dims += motion_dict[key].shape[1]
         log.info(f"{key}: {motion_dict[key].shape}, joints {num_joints}, exp: {exp_n_joints}")
-    log.info(f"total dims: {tot_dims}")
-    # log.info("\nLABELS")
-    # labels = load_label(data_dir, seq, file)
-    # for key in labels:
-    #     log.info(f"{key}: {labels[key]}")
+    log.info(f"total MOTION-X dims: {tot_dims}")
+
+    action_label_path = pjoin(data_root, 'texts', name + '.txt')
+    action_label = load_label_from_file(action_label_path)
+    emotion_label_path = pjoin(data_root, 'face_texts', name + '.txt')
+    emotion_label = load_label_from_file(emotion_label_path)
+    log.info(f"action: {action_label}")
+    log.info(f"emotion: {emotion_label}")
