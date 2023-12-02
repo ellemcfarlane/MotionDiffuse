@@ -1,7 +1,7 @@
 # get git root
 ROOT_DIR:=$(shell git rev-parse --show-toplevel)/text2motion
 PYTHON_BIN:=/work3/s222376/MotionDiffuseNew/bin/python3
-
+EXP:=motiondiffuse
 
 infer:
 # checkpoints/t2m/t2m_motiondiffuse/opt.txt
@@ -11,8 +11,9 @@ infer:
 	--npy_path checkpoints/grab/grab_baseline_dp_2gpu_8layers_1000/outputs \
 
 train:
+	echo "experiment name ${EXP}"
 	cd ${ROOT_DIR} && ${PYTHON_BIN} -m tools.train \
-	--name grab_baseline_dp_2gpu_8layers_1000 \
+	--name md_${EXP} \
 	--batch_size 1 \
 	--times 50 \
 	--num_epochs 50 \
@@ -23,6 +24,7 @@ train:
 	--gpu_id 0 \
 	--use_wandb \
 	--wandb_user "elles" \
+	--experiment_name md_${EXP} \
 
 
 play:

@@ -1,5 +1,7 @@
-from options.base_options import BaseOptions
 import argparse
+
+from options.base_options import BaseOptions
+
 
 class TrainCompOptions(BaseOptions):
     def initialize(self):
@@ -25,4 +27,5 @@ class TrainCompOptions(BaseOptions):
         self.parser.add_argument('--save_latest', type=int, default=500, help='Frequency of saving models (by iteration)')
         self.parser.add_argument('--use_wandb', action='store_true', help='whether to log with wandb')
         self.parser.add_argument('--wandb_user', type=str, default='text2motion', help='wandb user name')
+        self.parser.add_argument('--experiment_name', type=str, default='motiondiffuse', help='experiment name')
         self.is_train = True

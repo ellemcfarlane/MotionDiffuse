@@ -51,7 +51,7 @@ if __name__ == '__main__':
         wandb_id = wandb.util.generate_id()
         wandb.init(
             project="text2motion",
-            name="MotionDiffuse",
+            name=opt.experiment_name,
             entity=opt.wandb_user,
             # notes=opt.EXPERIMENT_NOTE,
             config=opt,
@@ -80,7 +80,7 @@ if __name__ == '__main__':
         # fps = 20 # TODO (elmc): verify this, also for visualization I think
         dim_pose = 212 # drop betas (body shape) and face-shape from Motion data (via to_smplx_params & smplx_dict_to_array method)
         opt.dim_pose = dim_pose
-        # opt.max_motion_length = 400  # TODO (elmc): verify this
+        opt.max_motion_length = 400  # TODO (elmc): verify this
         # TODO (elmc): verify what this does and if we can use the t2m one
         # NOTE: think, again, it's only for visualization
         # kinematic_chain = paramUtil.t2m_kinematic_chain
