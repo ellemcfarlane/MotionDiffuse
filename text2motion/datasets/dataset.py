@@ -37,7 +37,6 @@ class Text2MotionDataset(data.Dataset):
         print(f"id-list length: {len(id_list)}")
         for name in tqdm(id_list):
             try:
-                # attempting to load motion for M03204 at ./data/KIT-ML/new_joint_vecs/M03204.npy
                 print(f"attempting to load motion for {name} at {pjoin(opt.motion_dir, name + '.npy')}")
                 motion = np.load(pjoin(opt.motion_dir, name + '.npy'))
                 if self.opt.dataset_name.lower() == 'grab':
@@ -45,7 +44,6 @@ class Text2MotionDataset(data.Dataset):
                     assert motion.shape[-1] == opt.dim_pose, f"motion shape {motion.shape} does not match dim_pose {opt.dim_pose}"
                     print(f"grab motion shape: {motion.shape}")
                 print(f"len of motion: {len(motion)}")
-                # import pdb; pdb.set_trace()
                 # TODO (elmc): verify we don't need this for GRAB data
                 # if (len(motion)) < min_motion_len or (len(motion) >= 200):
                 #     continue
