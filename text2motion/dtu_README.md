@@ -46,3 +46,13 @@ text2motion/data/KIT-ML
 
 ## INFERENCE with pretrained model
 * download...checkpoints?? idk look at their README.md
+
+## Changes I made
+* ignore standardization
+* tokens are [] empty...
+* reusing kit_chain thing lol
+* only training on one sequence from grab
+
+TO KEEP IN MIND:
+* they specify best way to train in readme somewhere -- follow this when doing real training!
+* need to add the emotion text to the caption!!

@@ -1,20 +1,20 @@
-import os
-import torch
-import numpy as np
 import argparse
+import os
 from os.path import join as pjoin
 
-import utils.paramUtil as paramUtil
+import numpy as np
+import torch
 from torch.utils.data import DataLoader
-from utils.plot_script import *
-from utils.get_opt import get_opt
-from datasets.evaluator_models import MotionLenEstimatorBiGRU
 
-from trainers import DDPMTrainer
+import utils.paramUtil as paramUtil
+from datasets.evaluator_models import MotionLenEstimatorBiGRU
 from models import MotionTransformer
-from utils.word_vectorizer import WordVectorizer, POS_enumerator
-from utils.utils import *
+from trainers import DDPMTrainer
+from utils.get_opt import get_opt
 from utils.motion_process import recover_from_ric
+from utils.plot_script import *
+from utils.utils import *
+from utils.word_vectorizer import POS_enumerator, WordVectorizer
 
 
 def plot_t2m(data, result_path, npy_path, caption):
@@ -54,22 +54,30 @@ if __name__ == '__main__':
     opt = get_opt(args.opt_path, device)
     opt.do_denoise = True
 
-    assert opt.dataset_name == "t2m"
+    # TODO (elmc): re-enable this
+    # assert opt.dataset_name == "t2m"
     assert args.motion_length <= 196
-    opt.data_root = './dataset/HumanML3D'
-    opt.motion_dir = pjoin(opt.data_root, 'new_joint_vecs')
+    # opt.data_root = './dataset/HumanML3D'
+    opt.data_root = './data/GRAB'
+    # opt.motion_dir = pjoin(opt.data_root, 'new_joint_vecs')
     opt.text_dir = pjoin(opt.data_root, 'texts')
-    opt.joints_num = 22
-    opt.dim_pose = 263
+    # TODO (elmc): re-enable this
+    # opt.joints_num = 22
+    # opt.dim_pose = 263
+    opt.dim_pose = 212
     dim_word = 300
     dim_pos_ohot = len(POS_enumerator)
-    num_classes = 200 // opt.unit_length
+    # TODO (elmc): re-enable this
+    # num_classes = 200 // opt.unit_length
 
-    mean = np.load(pjoin(opt.meta_dir, 'mean.npy'))
-    std = np.load(pjoin(opt.meta_dir, 'std.npy'))
-    print(f"mean shape: {mean.shape}, std shape: {std.shape}")
+    # TODO (elmc): add back in
+    # mean = np.load(pjoin(opt.meta_dir, 'mean.npy'))
+    # std = np.load(pjoin(opt.meta_dir, 'std.npy'))
+    # print(f"mean shape: {mean.shape}, std shape: {std.shape}")
 
+    print("Loading word vectorizer...")
     encoder = build_models(opt).to(device)
+    print("Loading model...")
     trainer = DDPMTrainer(opt, encoder)
     trainer.load(pjoin(opt.model_dir, opt.which_epoch + '.tar'))
 
@@ -83,7 +91,17 @@ if __name__ == '__main__':
             m_lens = torch.LongTensor([args.motion_length]).to(device)
             pred_motions = trainer.generate(caption, m_lens, opt.dim_pose)
             motion = pred_motions[0].cpu().numpy()
-            motion = motion * std + mean
+            # TODO (elmc): add back in
+            # motion = motion * std + mean
             title = args.text + " #%d" % motion.shape[0]
-            print("trying to plot")
-            plot_t2m(motion, args.result_path, args.npy_path, title)
+            print(f"trying to plot {title}")
+            # write motion to numpy file
+            text_no_spaces = args.text.replace(" ", "_")
+            if not os.path.exists(args.npy_path):
+                os.makedirs(args.npy_path)
+            full_npy_path = f"{args.npy_path}/{text_no_spaces}.npy"
+            with open(full_npy_path, 'wb') as f:
+                print(f"saving output to {full_npy_path}")
+                np.save(f, motion)
+
+            # plot_t2m(motion, args.result_path, args.npy_path, title)

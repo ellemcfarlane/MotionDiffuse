@@ -1,21 +1,22 @@
 import os
-from os.path import join as pjoin
 # print cwd
 import sys
+from os.path import join as pjoin
+
 sys.path.append(os.getcwd())
-import utils.paramUtil as paramUtil
-from options.train_options import TrainCompOptions
-from utils.plot_script import *
-
-from models import MotionTransformer
-from trainers import DDPMTrainer
-from datasets import Text2MotionDataset
-
-from mmcv.runner import get_dist_info, init_dist
-from mmcv.parallel import MMDistributedDataParallel, MMDataParallel
 import torch
 import torch.distributed as dist
+from mmcv.parallel import MMDataParallel, MMDistributedDataParallel
+from mmcv.runner import get_dist_info, init_dist
+
+import utils.paramUtil as paramUtil
 import wandb
+from datasets import Text2MotionDataset
+from models import MotionTransformer
+from options.train_options import TrainCompOptions
+from trainers import DDPMTrainer
+from utils.plot_script import *
+
 
 def build_models(opt, dim_pose):
     encoder = MotionTransformer(
@@ -50,7 +51,7 @@ if __name__ == '__main__':
         wandb_id = wandb.util.generate_id()
         wandb.init(
             project="text2motion",
-            name="MotionDiffuse",
+            name=opt.experiment_name,
             entity=opt.wandb_user,
             # notes=opt.EXPERIMENT_NOTE,
             config=opt,
@@ -71,15 +72,21 @@ if __name__ == '__main__':
         dim_pose = 263
         kinematic_chain = paramUtil.t2m_kinematic_chain
     elif opt.dataset_name == 'grab':
-        opt.data_root = '/work3/s222376/diffusion_bodies/data/face_motion_data/smplx_322/GRAB'
-        opt.motion_dir = pjoin(opt.data_root, 'new_joint_vecs')
+        opt.data_root = './data/GRAB'
+        opt.motion_dir = pjoin(opt.data_root, 'joints')
         opt.text_dir = pjoin(opt.data_root, 'texts')
-        opt.joints_num = 22
-        radius = 4
-        fps = 20
-        dim_pose = 263
-        opt.max_motion_length = 196
-        kinematic_chain = paramUtil.grab_kinematic_chain
+        opt.joints_num = 72 # TODO (elmc): verify this BUT ALSO I'M NOT USING IT FOR NOW!
+        # radius = 4 # TODO (elmc): verify this, think it's only for visualization purposes
+        # fps = 20 # TODO (elmc): verify this, also for visualization I think
+        dim_pose = 212 # drop betas (body shape) and face-shape from Motion data (via to_smplx_params & smplx_dict_to_array method)
+        opt.dim_pose = dim_pose
+        opt.max_motion_length = 400  # TODO (elmc): verify this
+        # TODO (elmc): verify what this does and if we can use the t2m one
+        # NOTE: think, again, it's only for visualization
+        # kinematic_chain = paramUtil.t2m_kinematic_chain
+        # kinematic_chain = paramUtil.grab_kinematic_chain
+        print(f"loading data root: {opt.data_root}")
+        # print(f"kinematic chain: {kinematic_chain}")
     elif opt.dataset_name == 'kit':
         opt.data_root = './data/KIT-ML'
         opt.motion_dir = pjoin(opt.data_root, 'new_joint_vecs')
@@ -94,7 +101,9 @@ if __name__ == '__main__':
     else:
         raise KeyError('Dataset Does Not Exist')
 
+    # TODO (elmc): check dim_word???
     dim_word = 300
+    # TODO (elmc): replace with actual mean and std of *training* data
     mean = np.load(pjoin(opt.data_root, 'Mean.npy'))
     std = np.load(pjoin(opt.data_root, 'Std.npy'))
 
@@ -116,4 +125,5 @@ if __name__ == '__main__':
 
     trainer = DDPMTrainer(opt, encoder)
     train_dataset = Text2MotionDataset(opt, mean, std, train_split_file, opt.times)
+    print(f"loaded data, now training")
     trainer.train(train_dataset)
