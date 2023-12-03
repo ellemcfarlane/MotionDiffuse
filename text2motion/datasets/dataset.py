@@ -124,8 +124,8 @@ class Text2MotionDataset(data.Dataset):
             # np.save(pjoin(opt.meta_dir, 'mean.npy'), mean)
             # np.save(pjoin(opt.meta_dir, 'std.npy'), std)
 
-        # self.mean = mean
-        # self.std = std
+        self.mean = mean
+        self.std = std
         self.length_arr = np.array(length_list)
         self.data_dict = data_dict
         self.name_list = name_list

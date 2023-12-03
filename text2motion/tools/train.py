@@ -16,6 +16,7 @@ from models import MotionTransformer
 from options.train_options import TrainCompOptions
 from trainers import DDPMTrainer
 from utils.plot_script import *
+from utils.utils import *
 
 
 def build_models(opt, dim_pose):
@@ -30,10 +31,13 @@ def build_models(opt, dim_pose):
 
 
 if __name__ == '__main__':
+
     parser = TrainCompOptions()
     opt = parser.parse()
     rank, world_size = get_dist_info()
 
+    print(f"setting random seed to {opt.seed}")
+    set_random_seed(opt.seed)
     opt.device = torch.device("cuda")
     torch.autograd.set_detect_anomaly(True)
     print(f"device id: {torch.cuda.current_device()}")

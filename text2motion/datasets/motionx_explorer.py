@@ -1,6 +1,7 @@
 import argparse
 import logging as log
 import os
+import time
 from os.path import join as pjoin
 from typing import Dict, Optional, Tuple
 
@@ -92,10 +93,9 @@ def load_data_as_dict(dataset_dir: str, seq: str, file: str) -> Dict[str, Tensor
         "betas": motion[:, 312:],  # controls the body shape. Body shape is static
     }
 
-def motion_arr_to_dict(motion_arr: ArrayLike, shapes_droped=False) -> Dict[str, Tensor]:
+def motion_arr_to_dict(motion_arr: ArrayLike, shapes_dropped=False) -> Dict[str, Tensor]:
     # TODO (elmc): why did I need to convert to tensor again???
     motion_arr = torch.tensor(motion_arr).float()
-    # if not shapes_droped:
     motion_dict = {
         "root_orient": motion_arr[:, :3],  # controls the global root orientation
         "pose_body": motion_arr[:, 3 : 3 + 63],  # controls the body
@@ -103,7 +103,7 @@ def motion_arr_to_dict(motion_arr: ArrayLike, shapes_droped=False) -> Dict[str, 
         "pose_jaw": motion_arr[:, 66 + 90 : 66 + 93],  # controls the jaw pose
         "face_expr": motion_arr[:, 159 : 159 + 50],  # controls the face expression
     }
-    if not shapes_droped:
+    if not shapes_dropped:
         motion_dict["face_shape"] = motion_arr[:, 209 : 209 + 100] # controls the face shape
         motion_dict["trans"] = motion_arr[:, 309 : 309 + 3] # controls the global body position
         motion_dict["betas"] = motion_arr[:, 312:] # controls the body shape. Body shape is static
@@ -188,6 +188,8 @@ def render_meshes(output, save_offscreen=False, output_dir="render_output"):
     joints_node = None
     # Rotation matrix (90 degrees around the X-axis)
     rot = trimesh.transformations.rotation_matrix(np.radians(90), [1, 0, 0])
+    sleep_time = 0.1
+    print(f"WARNING: SLEEPING between renders, {sleep_time} seconds")
     try:
         for i in range(0, len(vertices_list)):
             vertices = vertices_list[i]
@@ -289,6 +291,7 @@ def render_meshes(output, save_offscreen=False, output_dir="render_output"):
                     output_path = os.path.join(MY_REPO, output_dir, f"mesh_{i}.png")
                     imageio.imsave(output_path, color)  # Save the rendered image as PNG
                     r.delete()  # Free up the resources
+            time.sleep(sleep_time)
     except KeyboardInterrupt:
         viewer.close_external()
         gif_path = os.path.join(MY_REPO, "mesh.gif")
@@ -374,11 +377,16 @@ if __name__ == "__main__":
     motion_path = pjoin(motion_dir, name + '.npy')
     log.info(f"loading motion from {motion_path}")
     motion_arr = np.load(motion_path)
-    # directly get smplx dimensionality by dropping body and face shape data
-    # motion_arr_smplx_dims = drop_shapes_from_motion_arr(motion_arr)
+    # drop shapes for ground-truth to have same dimensionality as inference
+    # for fair comparisons and reducing bugs
+    if not is_inference:
+        # directly get smplx dimensionality by dropping body and face shape data
+        print("warning, dropping body and face shape data")
+        motion_arr = drop_shapes_from_motion_arr(motion_arr)
+        assert motion_arr.shape[1] == 212, f"expected 212 dims, got {motion_arr.shape[1]}"
 
     # our MotionDiffuse predicts motion data that doesn't include face and body shape
-    motion_dict = motion_arr_to_dict(motion_arr, shapes_droped=is_inference)
+    motion_dict = motion_arr_to_dict(motion_arr, shapes_dropped=True)
     n_points = len(motion_dict["pose_body"])
 
     min_t = args.min_t

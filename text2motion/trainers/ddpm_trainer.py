@@ -78,9 +78,10 @@ class DDPMTrainer(object):
             t=t,
             model_kwargs={"text": caption, "length": cur_len}
         )
-
         self.real_noise = output['target']
         self.fake_noise = output['pred']
+        print(f"pred up to 10: {self.fake_noise[0][0][0:10]}")
+        print(f"target up to 10: {self.real_noise[0][0][0:10]}")
         try:
             self.src_mask = self.encoder.module.generate_src_mask(T, cur_len).to(x_start.device)
         except:

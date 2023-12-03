@@ -74,7 +74,6 @@ if __name__ == '__main__':
     # mean = np.load(pjoin(opt.meta_dir, 'mean.npy'))
     # std = np.load(pjoin(opt.meta_dir, 'std.npy'))
     # print(f"mean shape: {mean.shape}, std shape: {std.shape}")
-
     print("Loading word vectorizer...")
     encoder = build_models(opt).to(device)
     print("Loading model...")

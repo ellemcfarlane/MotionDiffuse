@@ -91,9 +91,9 @@ def get_opt(opt_path, device):
         raise KeyError('Dataset not recognized')
 
     # TODO (elmc): is dim_word ever actually used?
-    opt.dim_word = 300
+    # opt.dim_word = 300
     # TODO (elmc): what is num classes for GRAB?
-    opt.num_classes = 200 // opt.unit_length
+    # opt.num_classes = 200 // opt.unit_length
     opt.dim_pos_ohot = len(POS_enumerator)
     opt.is_train = False
     opt.is_continue = False

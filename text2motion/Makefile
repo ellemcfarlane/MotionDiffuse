@@ -39,6 +39,8 @@ gen:
 	--model_path ${MODEL_DIR} \
 	--prompt "airplane pass" \
 	--display_mesh \
+	--min_t 0 \
+	--max_t 60 \
 
 # smpl-x displays poses from seq_file as meshes
 play:
