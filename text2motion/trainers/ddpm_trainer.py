@@ -1,16 +1,15 @@
-import codecs as cs
+# import codecs as cs
 import random
 import time
 from collections import OrderedDict
 from os.path import join as pjoin
 
 import torch
-import torch.distributed as dist
-import torch.nn.functional as F
+# import torch.distributed as dist
+# import torch.nn.functional as F
 import torch.optim as optim
 from mmcv.runner import get_dist_info
 from torch.nn.utils import clip_grad_norm_
-from torch.utils.data import DataLoader
 
 import wandb
 from datasets import build_dataloader
@@ -18,8 +17,11 @@ from models.gaussian_diffusion import (GaussianDiffusion, LossType,
                                        ModelMeanType, ModelVarType,
                                        create_named_schedule_sampler,
                                        get_named_beta_schedule)
-from models.transformer import MotionTransformer
+# from models.transformer import MotionTransformer
 from utils.utils import print_current_loss
+
+# from torch.utils.data import DataLoader
+
 
 
 class DDPMTrainer(object):
@@ -27,7 +29,7 @@ class DDPMTrainer(object):
     def __init__(self, args, encoder):
         self.opt = args
         self.device = args.device
-        self.encoder = encoder
+        self.encoder = encoder # MotionTransformer from train.build_models
         self.diffusion_steps = args.diffusion_steps
         sampler = 'uniform'
         beta_scheduler = 'linear'
@@ -85,6 +87,7 @@ class DDPMTrainer(object):
             self.src_mask = self.encoder.generate_src_mask(T, cur_len).to(x_start.device)
 
     def generate_batch(self, caption, m_lens, dim_pose):
+        import pdb; pdb.set_trace()
         xf_proj, xf_out = self.encoder.encode_text(caption, self.device)
         
         B = len(caption)

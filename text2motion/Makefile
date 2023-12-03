@@ -3,12 +3,14 @@ ROOT_DIR:=$(shell git rev-parse --show-toplevel)/text2motion
 PYTHON_BIN:=/work3/s222376/MotionDiffuseNew/bin/python3
 EXP:=motiondiffuse
 
+MODEL_DIR:=checkpoints/grab/grab_baseline_dp_2gpu_8layers_1000_first
+
 infer:
 # checkpoints/t2m/t2m_motiondiffuse/opt.txt
 	cd ${ROOT_DIR} && ${PYTHON_BIN} -m tools.visualization \
-	--opt_path checkpoints/grab/grab_baseline_dp_2gpu_8layers_1000/opt.txt \
+	--opt_path ${MODEL_DIR}/opt.txt \
 	--text "airplane pass" \
-	--npy_path checkpoints/grab/grab_baseline_dp_2gpu_8layers_1000/outputs \
+	--npy_path ${MODEL_DIR}/outputs \
 
 # TODO (elmc): increase batch_size from 1 when not debugging!!
 train:
@@ -22,7 +24,7 @@ train:
 	--num_layers 8 \
 	--diffusion_steps 1000 \
 	--data_parallel \
-	--gpu_id 0 1 \
+	--gpu_id 0 \
 	--wandb_user "elles" \
 	--experiment_name md_${EXP} \
 	--use_wandb \
@@ -30,13 +32,13 @@ train:
 play:
 	echo "make sure to run on hpc dtu gui with graphics support and that you use 'vglrun' before python3 call!"
 	cd $(ROOT_DIR) && vglrun ${PYTHON_BIN} -m datasets.motionx_explorer \
-	--model_path ./checkpoints/grab/grab_baseline_dp_2gpu_8layers_1000 \
+	--model_path ${MODEL_DIR} \
 	--prompt "airplane pass" \
 	--display_mesh \
 
 print-data:
 	cd $(ROOT_DIR) && ${PYTHON_BIN} -m datasets.motionx_explorer \
-	--model_path ./checkpoints/grab/grab_baseline_dp_2gpu_8layers_1000 \
+	--model_path ${MODEL_DIR} \
 	--prompt "a man sits"
 
 queue:
