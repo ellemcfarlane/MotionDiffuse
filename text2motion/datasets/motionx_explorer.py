@@ -368,6 +368,7 @@ if __name__ == "__main__":
         data_root = './data/GRAB'
         motion_dir = pjoin(data_root, 'joints')
     else:
+        log.info(f"converting prompt into file name")
         name = args.prompt.replace(' ', '_')
         model_type = args.model_path
         motion_dir = pjoin(model_type, 'outputs')

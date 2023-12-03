@@ -28,8 +28,10 @@ train:
 
 # put the model your trained in MODEL_DIR (set at top of file) and generate poses with it conditioned on prompt
 # smpl-x model then displays poses as meshes
+# WARNING: make sure to run 'make infer' first to generate the npy files for make gen
 gen:
 	echo "make sure to run on hpc dtu gui with graphics support and that you use 'vglrun' before python3 call!"
+	echo "WARNING: run 'make infer' first to generate the npy files for make gen"
 	cd $(ROOT_DIR) && vglrun ${PYTHON_BIN} -m datasets.motionx_explorer \
 	--model_path ${MODEL_DIR} \
 	--prompt "airplane pass" \
