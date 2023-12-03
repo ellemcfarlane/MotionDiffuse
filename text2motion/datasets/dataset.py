@@ -147,14 +147,16 @@ class Text2MotionDataset(data.Dataset):
         text_data = random.choice(text_list)
         caption = text_data['caption']
         max_motion_length = self.opt.max_motion_length
-        if m_length >= self.opt.max_motion_length:
-            idx = random.randint(0, len(motion) - max_motion_length)
-            motion = motion[idx: idx + max_motion_length]
-        else:
-            padding_len = max_motion_length - m_length
-            D = motion.shape[1]
-            padding_zeros = np.zeros((padding_len, D))
-            motion = np.concatenate((motion, padding_zeros), axis=0)
+        motion = motion[:max_motion_length]
+        # TODO (elmc): add back in
+        # if m_length >= self.opt.max_motion_length:
+        #     idx = random.randint(0, len(motion) - max_motion_length)
+        #     motion = motion[idx: idx + max_motion_length]
+        # else:
+        #     padding_len = max_motion_length - m_length
+        #     D = motion.shape[1]
+        #     padding_zeros = np.zeros((padding_len, D))
+        #     motion = np.concatenate((motion, padding_zeros), axis=0)
 
         assert len(motion) == max_motion_length
         "Z Normalization"
