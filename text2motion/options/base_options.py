@@ -1,8 +1,9 @@
 import argparse
 import os
+
 import torch
-from mmcv.runner import init_dist, get_dist_info
 import torch.distributed as dist
+from mmcv.runner import get_dist_info, init_dist
 
 
 class BaseOptions():

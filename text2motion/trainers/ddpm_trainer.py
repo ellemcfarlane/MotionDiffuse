@@ -194,6 +194,7 @@ class DDPMTrainer(object):
         for epoch in range(cur_epoch, self.opt.num_epochs):
             print(f"epoch {epoch}, logging to wandb every {self.opt.log_every} iters")
             self.train_mode()
+            # import pdb; pdb.set_trace()
             for i, batch_data in enumerate(train_loader):
                 print(f"epoch {epoch}, batch {i}")
                 # import pdb; pdb.set_trace()

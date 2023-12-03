@@ -3,7 +3,7 @@
 ### –- specify queue --
 #BSUB -q gpuv100
 ### -- set the job Name --
-#BSUB -J text2diffusion
+#BSUB -J 1pose_2gpu
 ### -- ask for number of cores (default: 1) --
 #BSUB -n 8
 ### -- specify that the cores must be on the same host -- 
@@ -37,4 +37,4 @@ module load cudnn/v7.6.5.32-prod-cuda-10.1
 echo "checking python bin location"
 which python3
 echo "training txt2motion diffusion model..."
-make train
+make train EXP=1pose_2gpu
