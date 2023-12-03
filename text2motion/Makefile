@@ -13,6 +13,9 @@ infer:
 	--npy_path ${MODEL_DIR}/outputs \
 	--seed 42 \
 
+eval:
+	cd ${ROOT_DIR} && ${PYTHON_BIN} -m tools.evaluation ${MODEL_DIR}/opt.txt \
+
 # TODO (elmc): increase batch_size from 1 when not debugging!!
 train:
 	echo "experiment name ${EXP}"
