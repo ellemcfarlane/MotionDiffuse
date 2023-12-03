@@ -28,7 +28,7 @@ train:
 	--num_layers 8 \
 	--diffusion_steps 1000 \
 	--data_parallel \
-	--gpu_id 0 \
+	--gpu_id 0 1 \
 	--wandb_user "elles" \
 	--experiment_name ${EXP} \
 	--log_every 50 \

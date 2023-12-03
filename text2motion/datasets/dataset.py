@@ -98,7 +98,7 @@ class Text2MotionDataset(data.Dataset):
         name_list, length_list = zip(*sorted(zip(new_name_list, length_list), key=lambda x: x[1]))
         print(f"LOADED length of name_list: {len(name_list)}")
         # TODO (elmc): calculate mean and std and save to load here?
-        # if opt.is_train:
+        if opt.is_train:
         #     # TODO (elle): how best to standardize the data?
 
         #     # root_rot_velocity (B, seq_len, 1)
@@ -121,8 +121,8 @@ class Text2MotionDataset(data.Dataset):
         #                                                       4 + (joints_num - 1) * 9 + joints_num * 3:] / opt.feat_bias
 
             # assert 4 + (joints_num - 1) * 9 + joints_num * 3 + 4 == mean.shape[-1]
-            # np.save(pjoin(opt.meta_dir, 'mean.npy'), mean)
-            # np.save(pjoin(opt.meta_dir, 'std.npy'), std)
+            np.save(pjoin(opt.meta_dir, 'mean.npy'), mean)
+            np.save(pjoin(opt.meta_dir, 'std.npy'), std)
 
         self.mean = mean
         self.std = std
@@ -151,21 +151,21 @@ class Text2MotionDataset(data.Dataset):
         caption = text_data['caption']
         max_motion_length = self.opt.max_motion_length
         # TODO (elmc): delete this and replace with if m_length >= self..etc
-        motion = motion[:max_motion_length]
+        # motion = motion[:max_motion_length]
         # TODO (elmc): add back in
-        # if m_length >= self.opt.max_motion_length:
-        #     idx = random.randint(0, len(motion) - max_motion_length)
-        #     motion = motion[idx: idx + max_motion_length]
-        # else:
-        #     padding_len = max_motion_length - m_length
-        #     D = motion.shape[1]
-        #     padding_zeros = np.zeros((padding_len, D))
-        #     motion = np.concatenate((motion, padding_zeros), axis=0)
+        if m_length >= self.opt.max_motion_length:
+            idx = random.randint(0, len(motion) - max_motion_length)
+            motion = motion[idx: idx + max_motion_length]
+        else:
+            padding_len = max_motion_length - m_length
+            D = motion.shape[1]
+            padding_zeros = np.zeros((padding_len, D))
+            motion = np.concatenate((motion, padding_zeros), axis=0)
 
         assert len(motion) == max_motion_length
         "Z Normalization"
         # TODO (elmc): add standardization back in
-        # motion = (motion - self.mean) / self.std
+        motion = (motion - self.mean) / self.std
 
         if self.eval_mode:
             tokens = text_data['tokens']

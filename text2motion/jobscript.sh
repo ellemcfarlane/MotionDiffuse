@@ -3,15 +3,15 @@
 ### –- specify queue --
 #BSUB -q gpuv100
 ### -- set the job Name --
-#BSUB -J 190_debug
+#BSUB -J md_long
 ### -- ask for number of cores (default: 1) --
-#BSUB -n 4
+#BSUB -n 8
 ### -- specify that the cores must be on the same host -- 
 #BSUB -R "span[hosts=1]"
 ### -- Select the resources: 1 gpu in exclusive process mode --
-#BSUB -gpu "num=1:mode=exclusive_process"
+#BSUB -gpu "num=2:mode=exclusive_process"
 ### -- set walltime limit: hh:mm --  maximum 24 hours for GPU-queues right now
-#BSUB -W 1:00
+#BSUB -W 5:00
 # request 5GB of system-memory
 #BSUB -R "rusage[mem=5GB]"
 ### -- set the email address --
@@ -37,4 +37,4 @@ module load cudnn/v7.6.5.32-prod-cuda-10.1
 echo "checking python bin location"
 which python3
 echo "training txt2motion diffusion model..."
-make train EXP=190_debug
+make train EXP=long

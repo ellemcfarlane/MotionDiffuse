@@ -28,6 +28,7 @@ if __name__ == "__main__":
     for name in names:
         # Load each NumPy array and add it to the list
         array = np.load(pjoin("./data/GRAB/joints", f"{name}.npy"))
+        print(f"shape of {name}: {array.shape}")
         all_arrays.append(array)
     mean, stddev = calc_mean_stddev_pose(all_arrays)
     # save to ./data/GRAB/Mean.npy and ./data/GRAB/Std.npy
