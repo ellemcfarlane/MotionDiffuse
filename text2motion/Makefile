@@ -30,8 +30,7 @@ train:
 	--experiment_name ${EXP} \
 	--log_every 50 \
 	--seed 42 \
-
-# --use_wandb \
+	--use_wandb \
 
 # put the model your trained in MODEL_DIR (set at top of file) and generate poses with it conditioned on prompt
 # smpl-x model then displays poses as meshes
