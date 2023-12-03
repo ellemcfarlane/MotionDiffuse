@@ -38,11 +38,15 @@ play:
 
 print-data:
 	cd $(ROOT_DIR) && ${PYTHON_BIN} -m datasets.motionx_explorer \
-	--model_path ${MODEL_DIR} \
-	--prompt "a man sits"
+
+#--model_path ${MODEL_DIR} \
+#--prompt "a man sits"
 
 queue:
 	cd ${ROOT_DIR} && bsub < jobscript.sh
+
+w_stats:
+	cd ${ROOT_DIR} && ${PYTHON_BIN} -m datasets.statistics_writer \
 
 stat:
 	@err_file=$$(ls -v gpu_*.err | tail -n 1); \
