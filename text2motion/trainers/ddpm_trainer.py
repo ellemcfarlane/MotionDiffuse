@@ -73,7 +73,7 @@ class DDPMTrainer(object):
         cur_len = torch.LongTensor([min(T, m_len) for m_len in  m_lens]).to(self.device)
         t, _ = self.sampler.sample(B, x_start.device)
         output = self.diffusion.training_losses(
-            model=self.encoder,
+            model=self.encoder, # MotionDiffusion is encoder
             x_start=x_start,
             t=t,
             model_kwargs={"text": caption, "length": cur_len}
@@ -87,7 +87,10 @@ class DDPMTrainer(object):
             self.src_mask = self.encoder.generate_src_mask(T, cur_len).to(x_start.device)
 
     def generate_batch(self, caption, m_lens, dim_pose):
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
+        # xf_proj they explain here https://github.com/mingyuan-zhang/MotionDiffuse/issues/10
+        # is an overall semantic feature to represent given language description,
+        # a common choice in NLP and motion gen & GLIDE is to use last token to represent overall characteristics
         xf_proj, xf_out = self.encoder.encode_text(caption, self.device)
         
         B = len(caption)

@@ -137,6 +137,9 @@ class Text2MotionDataset(data.Dataset):
         return len(self.data_dict)
 
     def __len__(self):
+        # authors explain why they multiple self.times here instead of increasing epochs
+        # https://github.com/mingyuan-zhang/MotionDiffuse/issues/12
+        # also say it's not necessary set use persistent_workers = True in build_dataloader
         return self.real_len() * self.times
 
     def __getitem__(self, item):
@@ -147,6 +150,7 @@ class Text2MotionDataset(data.Dataset):
         text_data = random.choice(text_list)
         caption = text_data['caption']
         max_motion_length = self.opt.max_motion_length
+        # TODO (elmc): delete this and replace with if m_length >= self..etc
         motion = motion[:max_motion_length]
         # TODO (elmc): add back in
         # if m_length >= self.opt.max_motion_length:

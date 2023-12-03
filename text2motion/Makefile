@@ -27,8 +27,9 @@ train:
 	--gpu_id 0 \
 	--wandb_user "elles" \
 	--experiment_name md_${EXP} \
-	--use_wandb \
-	--log_every 10 \
+	--log_every 50 \
+
+# --use_wandb \
 
 play:
 	echo "make sure to run on hpc dtu gui with graphics support and that you use 'vglrun' before python3 call!"

@@ -101,8 +101,8 @@ if __name__ == '__main__':
     else:
         raise KeyError('Dataset Does Not Exist')
 
-    # TODO (elmc): check dim_word???
-    dim_word = 300
+    # TODO (elmc): check dim_word and add back in???
+    # dim_word = 300
     # TODO (elmc): replace with actual mean and std of *training* data
     mean = np.load(pjoin(opt.data_root, 'Mean.npy'))
     std = np.load(pjoin(opt.data_root, 'Std.npy'))
