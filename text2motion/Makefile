@@ -31,20 +31,23 @@ train:
 
 # --use_wandb \
 
-play:
+# put the model your trained in MODEL_DIR (set at top of file) and generate poses with it conditioned on prompt
+# smpl-x model then displays poses as meshes
+gen:
 	echo "make sure to run on hpc dtu gui with graphics support and that you use 'vglrun' before python3 call!"
 	cd $(ROOT_DIR) && vglrun ${PYTHON_BIN} -m datasets.motionx_explorer \
+	--model_path ${MODEL_DIR} \
+	--prompt "airplane pass" \
 	--display_mesh \
-	--seq_file "s5/airplane_pass_1" \
 
-# --model_path ${MODEL_DIR} \
-# --prompt "airplane pass" \
+# smpl-x displays poses from seq_file as meshes
+play:
+	cd $(ROOT_DIR) && vglrun ${PYTHON_BIN} -m datasets.motionx_explorer \
+	--seq_file "s5/airplane_pass_1" \
+	--display_mesh \
 
 print-data:
 	cd $(ROOT_DIR) && ${PYTHON_BIN} -m datasets.motionx_explorer \
-
-#--model_path ${MODEL_DIR} \
-#--prompt "a man sits"
 
 queue:
 	cd ${ROOT_DIR} && bsub < jobscript.sh
