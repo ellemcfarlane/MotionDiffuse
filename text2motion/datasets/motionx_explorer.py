@@ -329,7 +329,15 @@ if __name__ == "__main__":
         type=str,
         required=False,
         default="",
-        help="Prompt for inference",
+        help="Prompt for inference display",
+    )
+    parser.add_argument(
+        "-sf",
+        "--seq_file",
+        type=str,
+        required=False,
+        default="",
+        help="file for non-inference display",
     )
     # add model_path arg
     parser.add_argument(
@@ -349,9 +357,14 @@ if __name__ == "__main__":
     prompt = args.prompt
     is_inference = len(prompt) > 0
 
+    if args.seq_file != "" and args.prompt != "":
+        log.error("cannot provide both prompt and seq_file; if trying to verify model inference, use --prompt, otherwise specify numpy --seq_file name to display")
+        exit(1)
+    elif args.seq_file == "" and args.prompt == "":
+        log.error("must provide either prompt or seq_file; if trying to verify model inference, use --prompt, otherwise specify numpy --seq_file name to display")
+        exit(1)
     if not is_inference:
-        # TODO (elmc): include in argparse, too
-        name = "s1/airplane_fly_1"
+        name = args.seq_file
         data_root = './data/GRAB'
         motion_dir = pjoin(data_root, 'joints')
     else:

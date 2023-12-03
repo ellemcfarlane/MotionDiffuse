@@ -28,13 +28,16 @@ train:
 	--wandb_user "elles" \
 	--experiment_name md_${EXP} \
 	--use_wandb \
+	--log_every 10 \
 
 play:
 	echo "make sure to run on hpc dtu gui with graphics support and that you use 'vglrun' before python3 call!"
 	cd $(ROOT_DIR) && vglrun ${PYTHON_BIN} -m datasets.motionx_explorer \
-	--model_path ${MODEL_DIR} \
-	--prompt "airplane pass" \
 	--display_mesh \
+	--seq_file "s5/airplane_pass_1" \
+
+# --model_path ${MODEL_DIR} \
+# --prompt "airplane pass" \
 
 print-data:
 	cd $(ROOT_DIR) && ${PYTHON_BIN} -m datasets.motionx_explorer \
@@ -47,6 +50,9 @@ queue:
 
 w_stats:
 	cd ${ROOT_DIR} && ${PYTHON_BIN} -m datasets.statistics_writer \
+
+w_custom:
+	cd ${ROOT_DIR} && ${PYTHON_BIN} -m datasets.custom_data_writer \
 
 stat:
 	@err_file=$$(ls -v gpu_*.err | tail -n 1); \
