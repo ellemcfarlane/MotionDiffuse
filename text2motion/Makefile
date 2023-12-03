@@ -11,12 +11,13 @@ infer:
 	--opt_path ${MODEL_DIR}/opt.txt \
 	--text "airplane pass" \
 	--npy_path ${MODEL_DIR}/outputs \
+	--seed 42 \
 
 # TODO (elmc): increase batch_size from 1 when not debugging!!
 train:
 	echo "experiment name ${EXP}"
 	cd ${ROOT_DIR} && ${PYTHON_BIN} -m tools.train \
-	--name md_${EXP} \
+	--name ${EXP} \
 	--batch_size 1 \
 	--times 50 \
 	--num_epochs 50 \
@@ -26,8 +27,9 @@ train:
 	--data_parallel \
 	--gpu_id 0 \
 	--wandb_user "elles" \
-	--experiment_name md_${EXP} \
+	--experiment_name ${EXP} \
 	--log_every 50 \
+	--seed 42 \
 
 # --use_wandb \
 
