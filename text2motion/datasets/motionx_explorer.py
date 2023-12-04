@@ -198,9 +198,6 @@ def render_meshes(output, should_save_gif=False, gif_path=None):
     joints_node = None
     # Rotation matrix (90 degrees around the X-axis)
     rot = trimesh.transformations.rotation_matrix(np.radians(90), [1, 0, 0])
-    sleep_time = 0.1
-    if should_display:
-        print(f"WARNING: SLEEPING between renders, {sleep_time} seconds")
     gif_frames = []
     if should_save_gif:
         os.makedirs(os.path.dirname(gif_path), exist_ok=True)
@@ -290,8 +287,6 @@ def render_meshes(output, should_save_gif=False, gif_path=None):
                 ###### RENDER LOCK RELEASE #####
                 if should_display:
                     viewer.render_lock.release()
-            # if should_display:
-            #     time.sleep(sleep_time)
     except KeyboardInterrupt:
         if should_display:
             viewer.close_external()
