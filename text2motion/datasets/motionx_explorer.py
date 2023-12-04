@@ -13,6 +13,7 @@ import torch
 import trimesh
 from numpy.typing import ArrayLike
 from torch import Tensor
+from tqdm import tqdm
 
 log.basicConfig(
     level=log.INFO,
@@ -175,23 +176,36 @@ def smplx_dict_to_array(smplx_dict):
     smplx_array = torch.cat(smplx_array, dim=1)
     return smplx_array
 
-def render_meshes(output, save_offscreen=False, output_dir="render_output"):
+def save_gif(gif_path, gif_frames, duration=0.01):
+    if gif_frames:
+        print(f"Saving GIF with {len(gif_frames)} frames to {gif_path}")
+        imageio.mimsave(uri=gif_path, ims=gif_frames, duration=duration)
+    else:
+        print("No frames to save.")
+
+def render_meshes(output, should_save_gif=False, gif_path=None):
+    should_display = not should_save_gif
     vertices_list = output.vertices.detach().cpu().numpy().squeeze()
     joints_list = output.joints.detach().cpu().numpy().squeeze()
     if len(vertices_list.shape) == 2:
         vertices_list = [vertices_list]
         joints_list = [joints_list]
     scene = pyrender.Scene()
-    if not save_offscreen:
+    if should_display:
         viewer = pyrender.Viewer(scene, run_in_thread=True)
+
     mesh_node = None
     joints_node = None
     # Rotation matrix (90 degrees around the X-axis)
     rot = trimesh.transformations.rotation_matrix(np.radians(90), [1, 0, 0])
     sleep_time = 0.1
-    print(f"WARNING: SLEEPING between renders, {sleep_time} seconds")
+    if should_display:
+        print(f"WARNING: SLEEPING between renders, {sleep_time} seconds")
+    gif_frames = []
+    if should_save_gif:
+        os.makedirs(os.path.dirname(gif_path), exist_ok=True)
     try:
-        for i in range(0, len(vertices_list)):
+        for i in tqdm(range(len(vertices_list))):
             vertices = vertices_list[i]
             joints = joints_list[i]
             # print("Vertices shape =", vertices.shape)
@@ -206,13 +220,8 @@ def render_meshes(output, save_offscreen=False, output_dir="render_output"):
 
                 # Apply rotation
                 tri_mesh.apply_transform(rot)
-                # translation_vector = [0, -0.5, 0]  # [x, y, z] - Change in Y-axis
-                # # Apply translation
-                # tri_mesh.apply_translation(translation_vector)
-                # print("Camera pose:")
-                # print(viewer.viewer_flags.camera_pose)
                 ##### RENDER LOCK #####
-                if not save_offscreen:
+                if should_display:
                     viewer.render_lock.acquire()
                 if mesh_node:
                     scene.remove_node(mesh_node)
@@ -220,14 +229,6 @@ def render_meshes(output, save_offscreen=False, output_dir="render_output"):
                 mesh_node = scene.add(mesh)
 
                 camera = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.0)
-                # # Here we set the camera 1 unit away from the origin and look at the origin
-                # cam_pose = np.array([
-                #     [1.0,  0,  0,  0],
-                #     [0,  1.0,  0,  0],
-                #     [0,  0,  1.0,  1],
-                #     [0,  0,  0,  1]
-                # ])
-                # Assuming 'mesh' is your trimesh object
                 min_bound, max_bound = mesh.bounds
 
                 # Calculate the center of the bounding box
@@ -240,29 +241,28 @@ def render_meshes(output, save_offscreen=False, output_dir="render_output"):
                 distance = max(extents) * 2  # Adjust the multiplier as needed
 
                 # Create a camera pose matrix
-                # This example places the camera looking towards the center of the bounding box
-                # TODO: figure out correct cam_pose so we don't have to manually shift camera
-                # and so we can save poses as images, right now camera bose is centered but above the person
                 cam_pose = np.array(
                     [
                         [1.0, 0, 0, center[0]],
-                        [0, 1.0, 0, center[1]],
-                        [0, 0, 1.0, center[2] + distance],
+                        [0, 1.0, 0, center[1]-1.0],
+                        [0, 0, 1.0, center[2] + distance + 0.5],
                         [0, 0, 0, 1],
                     ]
                 )
-                # cam_pose = np.array([
-                #     [1,  0,  0,  center[0]],
-                #     [0,  0, -1,  center[1]],  # Flipped Z and Y-axis for 'up' to be Y
-                #     [0,  1,  0,  center[2] + distance],  # Position camera in front of the person
-                #     [0,  0,  0,  1]
-                # ])
-                # cam_pose = np.array([
-                #     [1,  0,  0,  center[0]],
-                #     [0,  0, -1,  center[1]],  # Flipped Z and Y-axis for 'up' to be Y
-                #     [0,  1,  0,  center[2]],  # Position camera in front of the person
-                #     [0,  0,  0,  1]
-                # ])
+                # Rotate around X-axis
+                angle = np.radians(80)
+                cos_angle = np.cos(angle)
+                sin_angle = np.sin(angle)
+                rot_x_10_deg = np.array([
+                    [1, 0,        0,         0],
+                    [0, cos_angle, -sin_angle, 0],
+                    [0, sin_angle, cos_angle,  0],
+                    [0, 0,        0,         1]
+                ])
+                # rotate cam_pose with rot_x_10_deg
+                cam_pose = np.matmul(cam_pose, rot_x_10_deg)
+                cam_pose[:3, 3] += np.array([0, -2.2, -3.0])
+
                 scene.add(camera, pose=cam_pose)
 
                 # Add light for better visualization
@@ -282,22 +282,22 @@ def render_meshes(output, save_offscreen=False, output_dir="render_output"):
                     if joints_node:
                         scene.remove_node(joints_node)
                     joints_node = scene.add(joints_pcl)
-                ###### RENDER LOCK RELEASE #####
-                if not save_offscreen:
-                    viewer.render_lock.release()
-                if save_offscreen:
+                if should_save_gif:
                     r = pyrender.OffscreenRenderer(viewport_width=640, viewport_height=480)
                     color, _ = r.render(scene)
-                    output_path = os.path.join(MY_REPO, output_dir, f"mesh_{i}.png")
-                    imageio.imsave(output_path, color)  # Save the rendered image as PNG
+                    gif_frames.append(color)
                     r.delete()  # Free up the resources
-            time.sleep(sleep_time)
+                ###### RENDER LOCK RELEASE #####
+                if should_display:
+                    viewer.render_lock.release()
+            # if should_display:
+            #     time.sleep(sleep_time)
     except KeyboardInterrupt:
-        viewer.close_external()
-        gif_path = os.path.join(MY_REPO, "mesh.gif")
-        log.info(f"saving gif to {gif_path}")
-        # TODO: save_gif not working
-        viewer.save_gif(gif_path)
+        if should_display:
+            viewer.close_external()
+        save_gif(gif_path, gif_frames)
+    finally:
+        save_gif(gif_path, gif_frames)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -350,6 +350,14 @@ if __name__ == "__main__":
         required=False,
         default="",
         help="Path to model directory e.g. ./checkpoints/grab/grab_baseline_dp_2gpu_8layers_1000",
+    )
+    parser.add_argument(
+        "-sg",
+        "--save_gif",
+        action='store_true',
+        required=False,
+        default=False,
+        help="Save gif if this flag is present"
     )
     args = parser.parse_args()
 
@@ -426,7 +434,7 @@ if __name__ == "__main__":
         log.info(f"calculating mesh with batch size {batch_size}")
         model = smplx.SMPLX(
             model_folder,
-            use_pca=False,  # our joints are not in pca space
+            use_pca=False, # our joints are not in pca space
             num_expression_coeffs=NUM_FACIAL_EXPRESSION_DIMS,
             batch_size=batch_size,
         )
@@ -434,7 +442,9 @@ if __name__ == "__main__":
         log.info(f"output size {output.vertices.shape}")
         log.info(f"output size {output.joints.shape}")
         log.info("rendering mesh")
-        render_meshes(output)
+        model_name = args.model_path.split('/')[-1] if args.model_path else "ground_truth"
+        gif_path = f"gifs/{model_name}/{name}.gif"
+        render_meshes(output, gif_path=gif_path, should_save_gif=args.save_gif)
         log.warning(
             "if you don't see the mesh animation, make sure you are running on graphics compatible DTU machine (vgl xterm)."
         )

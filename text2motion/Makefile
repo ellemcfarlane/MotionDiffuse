@@ -21,14 +21,14 @@ train: w_stats
 	echo "experiment name md_${EXP}_seed${SEED}"
 	cd ${ROOT_DIR} && ${PYTHON_BIN} -m tools.train \
 	--name md_${EXP}_seed${SEED} \
-	--batch_size 1 \
+	--batch_size 128 \
 	--times 50 \
 	--num_epochs 50 \
 	--dataset_name grab \
 	--num_layers 8 \
 	--diffusion_steps 1000 \
 	--data_parallel \
-	--gpu_id 0 \
+	--gpu_id 0 1 \
 	--wandb_user "elles" \
 	--experiment_name md_${EXP}_seed${SEED} \
 	--log_every 50 \
@@ -47,6 +47,7 @@ gen:
 	--display_mesh \
 	--min_t 0 \
 	--max_t 60 \
+	--save_gif \
 
 aug:
 	cd $(ROOT_DIR) && ${PYTHON_BIN} -m Motion-X.mocap-dataset-process.face_motion_augmentation \
@@ -56,6 +57,7 @@ play:
 	cd $(ROOT_DIR) && vglrun ${PYTHON_BIN} -m datasets.motionx_explorer \
 	--seq_file "s5/airplane_pass_1" \
 	--display_mesh \
+	--save_gif \
 
 print-data:
 	cd $(ROOT_DIR) && ${PYTHON_BIN} -m datasets.motionx_explorer \

@@ -81,6 +81,7 @@ if __name__ == '__main__':
         opt.data_root = './data/GRAB'
         opt.motion_dir = pjoin(opt.data_root, 'joints')
         opt.text_dir = pjoin(opt.data_root, 'texts')
+        opt.face_text_dir = pjoin(opt.data_root, 'face_texts')
         opt.joints_num = 72 # TODO (elmc): verify this BUT ALSO I'M NOT USING IT FOR NOW!
         # radius = 4 # TODO (elmc): verify this, think it's only for visualization purposes
         # fps = 20 # TODO (elmc): verify this, also for visualization I think
@@ -109,7 +110,6 @@ if __name__ == '__main__':
 
     # TODO (elmc): check dim_word and add back in???
     # dim_word = 300
-    # TODO (elmc): replace with actual mean and std of *training* data
     mean = np.load(pjoin(opt.data_root, 'Mean.npy'))
     std = np.load(pjoin(opt.data_root, 'Std.npy'))
 
