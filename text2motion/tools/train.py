@@ -16,6 +16,7 @@ from models import MotionTransformer
 from options.train_options import TrainCompOptions
 from trainers import DDPMTrainer
 from utils.plot_script import *
+from utils.utils import *
 
 
 def build_models(opt, dim_pose):
@@ -30,10 +31,13 @@ def build_models(opt, dim_pose):
 
 
 if __name__ == '__main__':
+
     parser = TrainCompOptions()
     opt = parser.parse()
     rank, world_size = get_dist_info()
 
+    print(f"setting random seed to {opt.seed}")
+    set_random_seed(opt.seed)
     opt.device = torch.device("cuda")
     torch.autograd.set_detect_anomaly(True)
     print(f"device id: {torch.cuda.current_device()}")
@@ -51,7 +55,7 @@ if __name__ == '__main__':
         wandb_id = wandb.util.generate_id()
         wandb.init(
             project="text2motion",
-            name=opt.experiment_name,
+            name=f"{opt.experiment_name}",
             entity=opt.wandb_user,
             # notes=opt.EXPERIMENT_NOTE,
             config=opt,
@@ -80,7 +84,7 @@ if __name__ == '__main__':
         # fps = 20 # TODO (elmc): verify this, also for visualization I think
         dim_pose = 212 # drop betas (body shape) and face-shape from Motion data (via to_smplx_params & smplx_dict_to_array method)
         opt.dim_pose = dim_pose
-        opt.max_motion_length = 400  # TODO (elmc): verify this
+        opt.max_motion_length = 432  # TODO (elmc): verify this; do this dynamically..??
         # TODO (elmc): verify what this does and if we can use the t2m one
         # NOTE: think, again, it's only for visualization
         # kinematic_chain = paramUtil.t2m_kinematic_chain
@@ -101,8 +105,8 @@ if __name__ == '__main__':
     else:
         raise KeyError('Dataset Does Not Exist')
 
-    # TODO (elmc): check dim_word???
-    dim_word = 300
+    # TODO (elmc): check dim_word and add back in???
+    # dim_word = 300
     # TODO (elmc): replace with actual mean and std of *training* data
     mean = np.load(pjoin(opt.data_root, 'Mean.npy'))
     std = np.load(pjoin(opt.data_root, 'Std.npy'))

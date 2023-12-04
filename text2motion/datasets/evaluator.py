@@ -1,16 +1,20 @@
-import torch
-from utils.word_vectorizer import WordVectorizer, POS_enumerator
-from utils.get_opt import get_opt
-from models import MotionTransformer
-from torch.utils.data import Dataset, DataLoader
-from os.path import join as pjoin
-from tqdm import tqdm
-import numpy as np
-from .evaluator_models import *
-import os
 import codecs as cs
+import os
 import random
+from os.path import join as pjoin
+
+import numpy as np
+import torch
+from torch.utils.data import DataLoader, Dataset
 from torch.utils.data._utils.collate import default_collate
+from tqdm import tqdm
+
+from models import MotionTransformer
+from utils.get_opt import get_opt
+from utils.word_vectorizer import POS_enumerator, WordVectorizer
+
+from .evaluator_models import *
+from .motionx_explorer import drop_shapes_from_motion_arr
 
 
 class EvaluationDataset(Dataset):
@@ -155,9 +159,16 @@ class Text2MotionDatasetV2(Dataset):
         length_list = []
         for name in tqdm(id_list):
             try:
+                print(f"attempting to load motion for {name} at {pjoin(opt.motion_dir, name + '.npy')}")
                 motion = np.load(pjoin(opt.motion_dir, name + '.npy'))
-                if (len(motion)) < min_motion_len or (len(motion) >= 200):
-                    continue
+                if self.opt.dataset_name.lower() == 'grab':
+                    motion = drop_shapes_from_motion_arr(motion)
+                    assert motion.shape[-1] == opt.dim_pose, f"motion shape {motion.shape} does not match dim_pose {opt.dim_pose}"
+                    print(f"grab motion shape: {motion.shape}")
+                print(f"len of motion: {len(motion)}")
+                # TODO (elmc): verify we don't need this for GRAB data
+                # if (len(motion)) < min_motion_len or (len(motion) >= 200):
+                #     continue
                 text_data = []
                 flag = False
                 with cs.open(pjoin(opt.text_dir, name + '.txt')) as f:
@@ -165,11 +176,16 @@ class Text2MotionDatasetV2(Dataset):
                         text_dict = {}
                         line_split = line.strip().split('#')
                         caption = line_split[0]
-                        tokens = line_split[1].split(' ')
-                        f_tag = float(line_split[2])
-                        to_tag = float(line_split[3])
-                        f_tag = 0.0 if np.isnan(f_tag) else f_tag
-                        to_tag = 0.0 if np.isnan(to_tag) else to_tag
+                        f_tag = 0.0
+                        to_tag = 0.0
+                        # TODO (elmc): add actual tokens back for grab
+                        tokens = []
+                        if self.opt.dataset_name.lower() != 'grab':
+                            tokens = line_split[1].split(' ')
+                            f_tag = float(line_split[2])
+                            to_tag = float(line_split[3])
+                            f_tag = 0.0 if np.isnan(f_tag) else f_tag
+                            to_tag = 0.0 if np.isnan(to_tag) else to_tag
 
                         text_dict['caption'] = caption
                         text_dict['tokens'] = tokens
@@ -177,39 +193,39 @@ class Text2MotionDatasetV2(Dataset):
                             flag = True
                             text_data.append(text_dict)
                         else:
-                            try:
-                                n_motion = motion[int(f_tag*20) : int(to_tag*20)]
-                                if (len(n_motion)) < min_motion_len or (len(n_motion) >= 200):
-                                    continue
+                            n_motion = motion[int(f_tag*20) : int(to_tag*20)]
+                            if (len(n_motion)) < min_motion_len or (len(n_motion) >= 200):
+                                continue
+                            new_name = random.choice('ABCDEFGHIJKLMNOPQRSTUVW') + '_' + name
+                            while new_name in data_dict:
                                 new_name = random.choice('ABCDEFGHIJKLMNOPQRSTUVW') + '_' + name
-                                while new_name in data_dict:
-                                    new_name = random.choice('ABCDEFGHIJKLMNOPQRSTUVW') + '_' + name
-                                data_dict[new_name] = {'motion': n_motion,
-                                                       'length': len(n_motion),
-                                                       'text':[text_dict]}
-                                new_name_list.append(new_name)
-                                length_list.append(len(n_motion))
-                            except:
-                                print(line_split)
-                                print(line_split[2], line_split[3], f_tag, to_tag, name)
-                                # break
+                            data_dict[new_name] = {'motion': n_motion,
+                                                    'length': len(n_motion),
+                                                    'text':[text_dict]}
+                            new_name_list.append(new_name)
+                            length_list.append(len(n_motion))
 
                 if flag:
                     data_dict[name] = {'motion': motion,
                                        'length': len(motion),
-                                       'text': text_data}
+                                       'text':text_data}
                     new_name_list.append(name)
                     length_list.append(len(motion))
-            except:
+            except Exception as e:
+                # Some motion may not exist in KIT dataset
+                print(f"failed to load motion for {name} at {pjoin(opt.motion_dir, name + '.npy')} due to {e}")
                 pass
 
+        if not new_name_list or not length_list:
+            raise ValueError(f'No data loaded, new_name_list has len {len(new_name_list)} and length_list has len {len(length_list)}')
         name_list, length_list = zip(*sorted(zip(new_name_list, length_list), key=lambda x: x[1]))
-
+        print(f"LOADED length of name_list: {len(name_list)}")
         self.mean = mean
         self.std = std
         self.length_arr = np.array(length_list)
         self.data_dict = data_dict
         self.name_list = name_list
+        # TODO (elmc): so.... V2 is same as V1 but has reset_max_len??
         self.reset_max_len(self.max_length)
 
     def reset_max_len(self, length):
@@ -278,12 +294,22 @@ def get_dataset_motion_loader(opt_path, batch_size, device):
     opt = get_opt(opt_path, device)
 
     # Configurations of T2M dataset and KIT dataset is almost the same
-    if opt.dataset_name == 't2m' or opt.dataset_name == 'kit':
+    if opt.dataset_name == 't2m' or opt.dataset_name == 'kit' or opt.dataset_name == 'grab':
         print('Loading dataset %s ...' % opt.dataset_name)
 
-        mean = np.load(pjoin(opt.meta_dir, 'mean.npy'))
-        std = np.load(pjoin(opt.meta_dir, 'std.npy'))
+        mean_path = pjoin(opt.meta_dir, 'mean.npy')
+        std_path = pjoin(opt.meta_dir, 'std.npy')
+        if not os.path.exists(mean_path):
+            mean = np.zeros(opt.dim_pose)
+        else:
+            mean = np.load(pjoin(opt.meta_dir, 'mean.npy'))
+        if not os.path.exists(std_path):
+            std = np.ones(opt.dim_pose)
+        else:
+            std = np.load(pjoin(opt.meta_dir, 'std.npy'))
 
+        # get glove data via following instructions here
+        # https://github.com/mingyuan-zhang/MotionDiffuse/blob/main/text2motion/install.md#data-preparation
         w_vectorizer = WordVectorizer('./data/glove', 'our_vab')
         split_file = pjoin(opt.data_root, 'test.txt')
         dataset = Text2MotionDatasetV2(opt, mean, std, split_file, w_vectorizer)
@@ -381,6 +407,8 @@ class EvaluatorModelWrapper(object):
             opt.dim_pose = 263
         elif opt.dataset_name == 'kit':
             opt.dim_pose = 251
+        elif opt.dataset_name == 'grab':
+            opt.dim_pose = 212
         else:
             raise KeyError('Dataset not Recognized!!!')
 

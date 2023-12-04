@@ -1,16 +1,15 @@
-import codecs as cs
+# import codecs as cs
 import random
 import time
 from collections import OrderedDict
 from os.path import join as pjoin
 
 import torch
-import torch.distributed as dist
-import torch.nn.functional as F
+# import torch.distributed as dist
+# import torch.nn.functional as F
 import torch.optim as optim
 from mmcv.runner import get_dist_info
 from torch.nn.utils import clip_grad_norm_
-from torch.utils.data import DataLoader
 
 import wandb
 from datasets import build_dataloader
@@ -18,8 +17,11 @@ from models.gaussian_diffusion import (GaussianDiffusion, LossType,
                                        ModelMeanType, ModelVarType,
                                        create_named_schedule_sampler,
                                        get_named_beta_schedule)
-from models.transformer import MotionTransformer
+# from models.transformer import MotionTransformer
 from utils.utils import print_current_loss
+
+# from torch.utils.data import DataLoader
+
 
 
 class DDPMTrainer(object):
@@ -27,7 +29,7 @@ class DDPMTrainer(object):
     def __init__(self, args, encoder):
         self.opt = args
         self.device = args.device
-        self.encoder = encoder
+        self.encoder = encoder # MotionTransformer from train.build_models
         self.diffusion_steps = args.diffusion_steps
         sampler = 'uniform'
         beta_scheduler = 'linear'
@@ -71,12 +73,11 @@ class DDPMTrainer(object):
         cur_len = torch.LongTensor([min(T, m_len) for m_len in  m_lens]).to(self.device)
         t, _ = self.sampler.sample(B, x_start.device)
         output = self.diffusion.training_losses(
-            model=self.encoder,
+            model=self.encoder, # MotionDiffusion is encoder
             x_start=x_start,
             t=t,
             model_kwargs={"text": caption, "length": cur_len}
         )
-
         self.real_noise = output['target']
         self.fake_noise = output['pred']
         try:
@@ -85,6 +86,10 @@ class DDPMTrainer(object):
             self.src_mask = self.encoder.generate_src_mask(T, cur_len).to(x_start.device)
 
     def generate_batch(self, caption, m_lens, dim_pose):
+        # import pdb; pdb.set_trace()
+        # xf_proj they explain here https://github.com/mingyuan-zhang/MotionDiffuse/issues/10
+        # is an overall semantic feature to represent given language description,
+        # a common choice in NLP and motion gen & GLIDE is to use last token to represent overall characteristics
         xf_proj, xf_out = self.encoder.encode_text(caption, self.device)
         
         B = len(caption)
@@ -194,6 +199,7 @@ class DDPMTrainer(object):
         for epoch in range(cur_epoch, self.opt.num_epochs):
             print(f"epoch {epoch}, logging to wandb every {self.opt.log_every} iters")
             self.train_mode()
+            # import pdb; pdb.set_trace()
             for i, batch_data in enumerate(train_loader):
                 print(f"epoch {epoch}, batch {i}")
                 # import pdb; pdb.set_trace()

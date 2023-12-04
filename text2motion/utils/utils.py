@@ -1,13 +1,35 @@
+import math
 import os
+import random
+import time
+
+import matplotlib.pyplot as plt
 import numpy as np
+import torch as th
 # import cv2
 from PIL import Image
-from utils import paramUtil
-import math
-import time
-import matplotlib.pyplot as plt
 from scipy.ndimage import gaussian_filter
 
+from utils import paramUtil
+
+
+def set_random_seed(seed: int, using_cuda: bool = False) -> None:
+    """Seed the different random generators.
+
+    :param seed:
+    :param using_cuda:
+    """
+    # Seed python RNG
+    random.seed(seed)
+    # Seed numpy RNG
+    np.random.seed(seed)
+    # seed the RNG for all devices (both CPU and CUDA)
+    th.manual_seed(seed)
+
+    if using_cuda:
+        # Deterministic operations for CuDNN, it may impact performances
+        th.backends.cudnn.deterministic = True
+        th.backends.cudnn.benchmark = False
 
 def mkdir(path):
     if not os.path.exists(path):

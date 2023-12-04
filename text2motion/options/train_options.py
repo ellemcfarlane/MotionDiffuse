@@ -28,4 +28,5 @@ class TrainCompOptions(BaseOptions):
         self.parser.add_argument('--use_wandb', action='store_true', help='whether to log with wandb')
         self.parser.add_argument('--wandb_user', type=str, default='text2motion', help='wandb user name')
         self.parser.add_argument('--experiment_name', type=str, default='motiondiffuse', help='experiment name')
+        self.parser.add_argument('--seed', type=int, default=0, help='random seed')
         self.is_train = True

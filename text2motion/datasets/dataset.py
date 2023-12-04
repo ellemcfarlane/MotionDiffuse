@@ -121,11 +121,12 @@ class Text2MotionDataset(data.Dataset):
         #                                                       4 + (joints_num - 1) * 9 + joints_num * 3:] / opt.feat_bias
 
             # assert 4 + (joints_num - 1) * 9 + joints_num * 3 + 4 == mean.shape[-1]
+            # TODO (elmc): add back in
             # np.save(pjoin(opt.meta_dir, 'mean.npy'), mean)
             # np.save(pjoin(opt.meta_dir, 'std.npy'), std)
 
-        # self.mean = mean
-        # self.std = std
+        self.mean = mean
+        self.std = std
         self.length_arr = np.array(length_list)
         self.data_dict = data_dict
         self.name_list = name_list
@@ -137,6 +138,9 @@ class Text2MotionDataset(data.Dataset):
         return len(self.data_dict)
 
     def __len__(self):
+        # authors explain why they multiple self.times here instead of increasing epochs
+        # https://github.com/mingyuan-zhang/MotionDiffuse/issues/12
+        # also say it's not necessary set use persistent_workers = True in build_dataloader
         return self.real_len() * self.times
 
     def __getitem__(self, item):
@@ -147,6 +151,9 @@ class Text2MotionDataset(data.Dataset):
         text_data = random.choice(text_list)
         caption = text_data['caption']
         max_motion_length = self.opt.max_motion_length
+        # TODO (elmc): delete this and replace with if m_length >= self..etc
+        # motion = motion[:max_motion_length]
+        # TODO (elmc): add back in
         if m_length >= self.opt.max_motion_length:
             idx = random.randint(0, len(motion) - max_motion_length)
             motion = motion[idx: idx + max_motion_length]
@@ -159,7 +166,11 @@ class Text2MotionDataset(data.Dataset):
         assert len(motion) == max_motion_length
         "Z Normalization"
         # TODO (elmc): add standardization back in
-        # motion = (motion - self.mean) / self.std
+        motion = (motion - self.mean) / self.std
+        # import pdb; pdb.set_trace()
+        # epsilon = 1e-10  # A small number to prevent division by zero
+        # adjusted_std = np.where(self.std == 0, epsilon, self.std)
+        # motion = (motion - self.mean) / adjusted_std
 
         if self.eval_mode:
             tokens = text_data['tokens']
