@@ -1,17 +1,18 @@
 # get git root
 ROOT_DIR:=$(shell git rev-parse --show-toplevel)/text2motion
-PYTHON_BIN:=/work3/s222376/MotionDiffuseNew/bin/python3
-EXP:=motiondiffuse
 SEED = 42
 MODEL_DIR:=checkpoints/grab/grab_baseline_dp_2gpu_8layers_1000_first
+
+PYTHON_BIN:=/dtu/blackhole/13/181395/MotionDiffuse/env/bin/python3
+EXP:=alexExp
 
 infer:
 # checkpoints/t2m/t2m_motiondiffuse/opt.txt
 	cd ${ROOT_DIR} && ${PYTHON_BIN} -m tools.visualization \
-	--opt_path ${MODEL_DIR}/opt.txt \
+	--opt_path checkpoints/grab/md_${EXP}/opt.txt \
 	--text "airplane pass" \
-	--npy_path ${MODEL_DIR}/outputs \
 	--seed 42 \
+	--npy_path checkpoints/grab/md_${EXP}/outputs \
 
 eval:
 	cd ${ROOT_DIR} && ${PYTHON_BIN} -m tools.evaluation ${MODEL_DIR}/opt.txt \
@@ -34,11 +35,13 @@ train:
 	--log_every 50 \
 	--seed ${SEED} \
 	--use_wandb \
+	--wandb_user "alexciru" \
+	--experiment_name md_${EXP} \
 
 # put the model your trained in MODEL_DIR (set at top of file) and generate poses with it conditioned on prompt
-# smpl-x model then displays poses as meshes
 # WARNING: make sure to run 'make infer' first to generate the npy files for make gen
 gen:
+# smpl-x model then displays poses as meshes
 	echo "make sure to run on hpc dtu gui with graphics support and that you use 'vglrun' before python3 call!"
 	echo "WARNING: run 'make infer' first to generate the npy files for make gen"
 	cd $(ROOT_DIR) && vglrun ${PYTHON_BIN} -m datasets.motionx_explorer \

@@ -84,7 +84,7 @@ if __name__ == '__main__':
         # fps = 20 # TODO (elmc): verify this, also for visualization I think
         dim_pose = 212 # drop betas (body shape) and face-shape from Motion data (via to_smplx_params & smplx_dict_to_array method)
         opt.dim_pose = dim_pose
-        opt.max_motion_length = 432  # TODO (elmc): verify this; do this dynamically..??
+        opt.max_motion_length = 259  # TODO (elmc): verify this
         # TODO (elmc): verify what this does and if we can use the t2m one
         # NOTE: think, again, it's only for visualization
         # kinematic_chain = paramUtil.t2m_kinematic_chain
@@ -110,7 +110,7 @@ if __name__ == '__main__':
     # TODO (elmc): replace with actual mean and std of *training* data
     mean = np.load(pjoin(opt.data_root, 'Mean.npy'))
     std = np.load(pjoin(opt.data_root, 'Std.npy'))
-
+ 
     train_split_file = pjoin(opt.data_root, 'train.txt')
     print(f"cwd is {os.getcwd()}")
     print(f"train_split_file: {train_split_file}")

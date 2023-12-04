@@ -1,0 +1,7 @@
+env/*
+text2motion/checkpoints/*
+text2motion/data/*
+text2motion/dataset/*
+text2motion/models/*
+text2motion/wandb/*
+*.pyc

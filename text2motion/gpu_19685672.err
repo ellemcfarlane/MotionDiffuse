@@ -1,0 +1,13 @@
+Loaded module: cuda/10.1
+Loaded module: cudnn/v7.6.5.32-prod-cuda-10.1
+2023-12-04 11:25:38,253 - root - INFO - MY_REPO: /dtu/blackhole/13/181395/MotionDiffuse/text2motion
+wandb: Currently logged in as: alexciru. Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.16.0 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.15.12
+wandb: Run data is saved locally in /dtu/blackhole/13/181395/MotionDiffuse/text2motion/wandb/run-20231204_112540-vk6vhrav
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run md_alexExp
+wandb: ⭐️ View project at https://wandb.ai/alexciru/text2motion
+wandb: 🚀 View run at https://wandb.ai/alexciru/text2motion/runs/vk6vhrav
+  0%|          | 0/1 [00:00<?, ?it/s]100%|██████████| 1/1 [00:00<00:00, 370.62it/s]

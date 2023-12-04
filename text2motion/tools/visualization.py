@@ -44,7 +44,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--opt_path', type=str, help='Opt path')
     parser.add_argument('--text', type=str, default="", help='Text description for motion generation')
-    parser.add_argument('--motion_length', type=int, default=60, help='Number of frames for motion generation')
+    parser.add_argument('--motion_length', type=int, default=196, help='Number of frames for motion generation')
     parser.add_argument('--result_path', type=str, default="test_sample.gif", help='Path to save generation result')
     parser.add_argument('--npy_path', type=str, default="", help='Path to save 3D keypoints sequence')
     parser.add_argument('--gpu_id', type=int, default=-1, help="which gpu to use")
