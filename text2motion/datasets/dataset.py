@@ -8,7 +8,7 @@ import torch
 from torch.utils import data
 from tqdm import tqdm
 
-from .motionx_explorer import drop_shapes_from_motion_arr
+from .motionx_explorer import drop_shapes_from_motion_arr, load_label_from_file
 
 
 class Text2MotionDataset(data.Dataset):
@@ -54,6 +54,9 @@ class Text2MotionDataset(data.Dataset):
                         text_dict = {}
                         line_split = line.strip().split('#')
                         caption = line_split[0]
+                        # append face_text to caption
+                        emotion_label = load_label_from_file(pjoin(opt.face_text_dir, name + '.txt'))
+                        caption = f"{emotion_label} {caption}"
                         f_tag = 0.0
                         to_tag = 0.0
                         # TODO (elmc): add actual tokens back for grab
