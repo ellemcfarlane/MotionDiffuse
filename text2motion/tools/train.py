@@ -6,12 +6,11 @@ from os.path import join as pjoin
 sys.path.append(os.getcwd())
 import torch
 import torch.distributed as dist
-from mmcv.parallel import MMDataParallel, MMDistributedDataParallel
-from mmcv.runner import get_dist_info, init_dist
-
 import utils.paramUtil as paramUtil
 import wandb
 from datasets import Text2MotionDataset
+from mmcv.parallel import MMDataParallel, MMDistributedDataParallel
+from mmcv.runner import get_dist_info, init_dist
 from models import MotionTransformer
 from options.train_options import TrainCompOptions
 from trainers import DDPMTrainer
@@ -87,7 +86,7 @@ if __name__ == '__main__':
         # fps = 20 # TODO (elmc): verify this, also for visualization I think
         dim_pose = 212 # drop betas (body shape) and face-shape from Motion data (via to_smplx_params & smplx_dict_to_array method)
         opt.dim_pose = dim_pose
-        opt.max_motion_length = 432  # TODO (elmc): verify this; do this dynamically..??
+        opt.max_motion_length = 196  # TODO (elmc): verify this; do this dynamically..??
         # TODO (elmc): verify what this does and if we can use the t2m one
         # NOTE: think, again, it's only for visualization
         # kinematic_chain = paramUtil.t2m_kinematic_chain
