@@ -203,7 +203,6 @@ class DDPMTrainer(object):
             # import pdb; pdb.set_trace()
             for i, batch_data in enumerate(train_loader):
                 print(f"epoch {epoch}, batch {i}")
-                # import pdb; pdb.set_trace()
                 self.forward(batch_data)
                 log_dict = self.update()
                 for k, v in log_dict.items():
