@@ -2,6 +2,8 @@ from os.path import join as pjoin
 
 import numpy as np
 
+from .motionx_explorer import drop_shapes_from_motion_arr
+
 
 def calc_mean_stddev_pose(arrays):
     # all_arrays = []
@@ -28,9 +30,14 @@ if __name__ == "__main__":
     for name in names:
         # Load each NumPy array and add it to the list
         array = np.load(pjoin("./data/GRAB/joints", f"{name}.npy"))
+        # drop shapes -> 212 dims
+        array = drop_shapes_from_motion_arr(array)
         print(f"shape of {name}: {array.shape}")
         all_arrays.append(array)
     mean, stddev = calc_mean_stddev_pose(all_arrays)
+    pose_dims = 212
+    assert mean.shape[0] == pose_dims
+    assert stddev.shape[0] == pose_dims
     # save to ./data/GRAB/Mean.npy and ./data/GRAB/Std.npy
     mean_write_path = pjoin("./data/GRAB", "Mean.npy")
     stddev_write_path = pjoin("./data/GRAB", "Std.npy")
