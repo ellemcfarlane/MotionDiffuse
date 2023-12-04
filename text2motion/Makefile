@@ -21,7 +21,7 @@ train: w_stats
 	echo "experiment name md_${EXP}_seed${SEED}"
 	cd ${ROOT_DIR} && ${PYTHON_BIN} -m tools.train \
 	--name md_${EXP}_seed${SEED} \
-	--batch_size 128 \
+	--batch_size 64 \
 	--times 50 \
 	--num_epochs 50 \
 	--dataset_name grab \
