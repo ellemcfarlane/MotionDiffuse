@@ -3,13 +3,13 @@ ROOT_DIR:=$(shell git rev-parse --show-toplevel)/text2motion
 PYTHON_BIN:=/work3/s222376/MotionDiffuseNew/bin/python3
 EXP:=motiondiffuse
 SEED = 42
-MODEL_DIR:=checkpoints/grab/test
+MODEL_DIR:=checkpoints/grab/md_noise_norm_small_1gpu_shared_seed42
 
 infer:
 # checkpoints/t2m/t2m_motiondiffuse/opt.txt
 	cd ${ROOT_DIR} && ${PYTHON_BIN} -m tools.visualization \
 	--opt_path ${MODEL_DIR}/opt.txt \
-	--text "airplane fly" \
+	--text "airplane pass" \
 	--npy_path ${MODEL_DIR}/outputs \
 	--seed 42 \
 
@@ -17,7 +17,7 @@ eval:
 	cd ${ROOT_DIR} && ${PYTHON_BIN} -m tools.evaluation ${MODEL_DIR}/opt.txt \
 
 # TODO (elmc): increase batch_size from 1 when not debugging!!
-train:
+train: w_stats
 	echo "experiment name md_${EXP}_seed${SEED}"
 	cd ${ROOT_DIR} && ${PYTHON_BIN} -m tools.train \
 	--name md_${EXP}_seed${SEED} \
@@ -28,7 +28,7 @@ train:
 	--num_layers 8 \
 	--diffusion_steps 1000 \
 	--data_parallel \
-	--gpu_id 0 1 \
+	--gpu_id 0 \
 	--wandb_user "elles" \
 	--experiment_name md_${EXP}_seed${SEED} \
 	--log_every 50 \
@@ -43,7 +43,7 @@ gen:
 	echo "WARNING: run 'make infer' first to generate the npy files for make gen"
 	cd $(ROOT_DIR) && vglrun ${PYTHON_BIN} -m datasets.motionx_explorer \
 	--model_path ${MODEL_DIR} \
-	--prompt "airplane fly" \
+	--prompt "airplane pass" \
 	--display_mesh \
 	--min_t 0 \
 	--max_t 60 \

@@ -4,6 +4,7 @@ import time
 from collections import OrderedDict
 from os.path import join as pjoin
 
+import numpy as np
 import torch
 # import torch.distributed as dist
 # import torch.nn.functional as F
@@ -223,6 +224,12 @@ class DDPMTrainer(object):
                             'loss_mot_rec': mean_loss['loss_mot_rec']
                         }
                         wandb.log(perf_dict)
+                    # print(f"noise shape {self.real_noise.shape}")
+                    # print(f"real noise: {self.real_noise}")
+                    # print(f"fake noise: {self.fake_noise}")
+                    # save real noise
+                    # noise_path = f"{self.opt.noise_dir}/{epoch}_{i}.npy"
+                    # np.save(noise_path, self.real_noise.cpu().numpy())
                 if it % self.opt.save_latest == 0 and rank == 0:
                     self.save(pjoin(self.opt.model_dir, 'latest.tar'), epoch, it)
 

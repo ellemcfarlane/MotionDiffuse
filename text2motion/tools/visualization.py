@@ -73,10 +73,9 @@ if __name__ == '__main__':
     # TODO (elmc): re-enable this
     # num_classes = 200 // opt.unit_length
 
-    # TODO (elmc): add back in
-    # mean = np.load(pjoin(opt.meta_dir, 'mean.npy'))
-    # std = np.load(pjoin(opt.meta_dir, 'std.npy'))
-    # print(f"mean shape: {mean.shape}, std shape: {std.shape}")
+    mean = np.load(pjoin(opt.meta_dir, 'mean.npy'))
+    std = np.load(pjoin(opt.meta_dir, 'std.npy'))
+
     print("Loading word vectorizer...")
     encoder = build_models(opt).to(device)
     print("Loading model...")
@@ -93,8 +92,7 @@ if __name__ == '__main__':
             m_lens = torch.LongTensor([args.motion_length]).to(device)
             pred_motions = trainer.generate(caption, m_lens, opt.dim_pose)
             motion = pred_motions[0].cpu().numpy()
-            # TODO (elmc): add back in
-            # motion = motion * std + mean
+            motion = motion * std + mean
             title = args.text + " #%d" % motion.shape[0]
             print(f"trying to plot {title}")
             # write motion to numpy file
