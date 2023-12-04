@@ -55,7 +55,7 @@ if __name__ == '__main__':
         wandb_id = wandb.util.generate_id()
         wandb.init(
             project="text2motion",
-            name=f"md_{opt.experiment_name}_seed{opt.seed}",
+            name=f"{opt.experiment_name}",
             entity=opt.wandb_user,
             # notes=opt.EXPERIMENT_NOTE,
             config=opt,
