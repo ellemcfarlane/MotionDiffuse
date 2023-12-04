@@ -38,6 +38,11 @@ if __name__ == "__main__":
     pose_dims = 212
     assert mean.shape[0] == pose_dims
     assert stddev.shape[0] == pose_dims
+    # check if stddev has 0's
+    stdev_zeros = np.where(stddev == 0)
+    print(f"stddev zeros: {stdev_zeros}")
+    # replace 0's with 1's
+    stddev[stdev_zeros] = 1
     # save to ./data/GRAB/Mean.npy and ./data/GRAB/Std.npy
     mean_write_path = pjoin("./data/GRAB", "Mean.npy")
     stddev_write_path = pjoin("./data/GRAB", "Std.npy")
@@ -47,6 +52,8 @@ if __name__ == "__main__":
     with open(stddev_write_path, "wb") as f:
         print(f"saving stddev to {stddev_write_path}")
         np.save(f, stddev)
+    
+    
     # test calculate_mean_stddev
     # pose_dim = 3
     # arrays_1s = np.full((4, pose_dim), 3)
