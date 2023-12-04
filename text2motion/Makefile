@@ -3,13 +3,13 @@ ROOT_DIR:=$(shell git rev-parse --show-toplevel)/text2motion
 PYTHON_BIN:=/work3/s222376/MotionDiffuseNew/bin/python3
 EXP:=motiondiffuse
 SEED = 42
-MODEL_DIR:=checkpoints/grab/grab_baseline_dp_2gpu_8layers_1000_first
+MODEL_DIR:=checkpoints/grab/test
 
 infer:
 # checkpoints/t2m/t2m_motiondiffuse/opt.txt
 	cd ${ROOT_DIR} && ${PYTHON_BIN} -m tools.visualization \
 	--opt_path ${MODEL_DIR}/opt.txt \
-	--text "airplane pass" \
+	--text "airplane fly" \
 	--npy_path ${MODEL_DIR}/outputs \
 	--seed 42 \
 
@@ -43,7 +43,7 @@ gen:
 	echo "WARNING: run 'make infer' first to generate the npy files for make gen"
 	cd $(ROOT_DIR) && vglrun ${PYTHON_BIN} -m datasets.motionx_explorer \
 	--model_path ${MODEL_DIR} \
-	--prompt "airplane pass" \
+	--prompt "airplane fly" \
 	--display_mesh \
 	--min_t 0 \
 	--max_t 60 \

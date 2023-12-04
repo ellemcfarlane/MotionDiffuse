@@ -48,8 +48,11 @@ if __name__ == '__main__':
     parser.add_argument('--result_path', type=str, default="test_sample.gif", help='Path to save generation result')
     parser.add_argument('--npy_path', type=str, default="", help='Path to save 3D keypoints sequence')
     parser.add_argument('--gpu_id', type=int, default=-1, help="which gpu to use")
+    parser.add_argument('--seed', type=int, default=0, help="random seed")
     args = parser.parse_args()
     
+    set_random_seed(args.seed)
+    print(f"set random seed to {args.seed}")
     device = torch.device('cuda:%d' % args.gpu_id if args.gpu_id != -1 else 'cpu')
     opt = get_opt(args.opt_path, device)
     opt.do_denoise = True
@@ -71,8 +74,8 @@ if __name__ == '__main__':
     # num_classes = 200 // opt.unit_length
 
     # TODO (elmc): add back in
-    mean = np.load(pjoin(opt.meta_dir, 'mean.npy'))
-    std = np.load(pjoin(opt.meta_dir, 'std.npy'))
+    # mean = np.load(pjoin(opt.meta_dir, 'mean.npy'))
+    # std = np.load(pjoin(opt.meta_dir, 'std.npy'))
     # print(f"mean shape: {mean.shape}, std shape: {std.shape}")
     print("Loading word vectorizer...")
     encoder = build_models(opt).to(device)
