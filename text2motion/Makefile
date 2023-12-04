@@ -28,7 +28,7 @@ train:
 	--num_layers 8 \
 	--diffusion_steps 1000 \
 	--data_parallel \
-	--gpu_id 0 1 \
+	--gpu_id 0 \
 	--wandb_user "elles" \
 	--experiment_name md_${EXP}_seed${SEED} \
 	--log_every 50 \
@@ -48,12 +48,6 @@ gen:
 	--min_t 0 \
 	--max_t 60 \
 
-# smpl-x displays poses from seq_file as meshes
-play:
-	cd $(ROOT_DIR) && vglrun ${PYTHON_BIN} -m datasets.motionx_explorer \
-	--seq_file "s5/airplane_pass_1" \
-	--display_mesh \
-
 aug:
 	cd $(ROOT_DIR) && ${PYTHON_BIN} -m Motion-X.mocap-dataset-process.face_motion_augmentation \
 
@@ -62,18 +56,6 @@ play:
 	cd $(ROOT_DIR) && vglrun ${PYTHON_BIN} -m datasets.motionx_explorer \
 	--seq_file "s5/airplane_pass_1" \
 	--display_mesh \
-
-print-data:
-	cd $(ROOT_DIR) && ${PYTHON_BIN} -m datasets.motionx_explorer \
-
-queue:
-	cd ${ROOT_DIR} && bsub < jobscript.sh
-
-w_stats:
-	cd ${ROOT_DIR} && ${PYTHON_BIN} -m datasets.statistics_writer \
-
-w_custom:
-	cd ${ROOT_DIR} && ${PYTHON_BIN} -m datasets.custom_data_writer \
 
 print-data:
 	cd $(ROOT_DIR) && ${PYTHON_BIN} -m datasets.motionx_explorer \
