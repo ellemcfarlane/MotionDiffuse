@@ -3,7 +3,7 @@
 ### –- specify queue --
 #BSUB -q gpuv100
 ### -- set the job Name --
-#BSUB -J full_emot_2gpu_excl
+#BSUB -J fulem_2g_excl_196
 ### -- ask for number of cores (default: 1) --
 #BSUB -n 8
 ### -- specify that the cores must be on the same host -- 
@@ -37,4 +37,4 @@ module load cudnn/v7.6.5.32-prod-cuda-10.1
 echo "checking python bin location"
 which python3
 echo "training txt2motion diffusion model..."
-make train EXP=full_emot_2gpu_shared
+make train EXP=fulem_2g_excl_196

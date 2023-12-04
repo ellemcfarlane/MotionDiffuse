@@ -3,15 +3,22 @@ ROOT_DIR:=$(shell git rev-parse --show-toplevel)/text2motion
 PYTHON_BIN:=python3
 EXP:=motiondiffuse
 SEED = 42
-MODEL_DIR:=checkpoints/grab/demo
+# MODEL_DIR:=checkpoints/grab/demo
+MODEL_DIR:=checkpoints/grab/md_fulem_2g_excl_196_seed42
+EPOCH:=latest
+# PROMPT:=a person walking happily
+PROMPT:=happiness airplane pass
+GT_FILE=s2/cubesmall_lift # ground-truth
+FRAMES=60
+MEAN_EMOTION=surprise
 
-infer:
-# checkpoints/t2m/t2m_motiondiffuse/opt.txt
-	cd ${ROOT_DIR} && ${PYTHON_BIN} -m tools.visualization \
-	--opt_path ${MODEL_DIR}/opt.txt \
-	--text "airplane pass" \
-	--npy_path ${MODEL_DIR}/outputs \
-	--seed 42 \
+mean-mesh:
+	cd $(ROOT_DIR) && vglrun ${PYTHON_BIN} -m datasets.mean_mesh \
+	--emotion ${MEAN_EMOTION} \
+	--file train.txt \
+
+expl-train:
+	cd ${ROOT_DIR} && ${PYTHON_BIN} -m datasets.train_explorer \
 
 eval:
 	cd ${ROOT_DIR} && ${PYTHON_BIN} -m tools.evaluation ${MODEL_DIR}/opt.txt \
@@ -35,29 +42,59 @@ train: w_stats
 	--seed ${SEED} \
 	--use_wandb \
 
+# get makes model generate seq according to text and writes result to npy file
+gen-npy:
+# checkpoints/t2m/t2m_motiondiffuse/opt.txt
+	cd ${ROOT_DIR} && ${PYTHON_BIN} -m tools.inference \
+	--opt_path ${MODEL_DIR}/opt.txt \
+	--which_epoch ${EPOCH} \
+	--text "${PROMPT}" \
+	--npy_path ${MODEL_DIR}/outputs \
+	--seed 42 \
+	--motion_length ${FRAMES} \
+
 # put the model your trained in MODEL_DIR (set at top of file) and generate poses with it conditioned on prompt
 # smpl-x model then displays poses as meshes
-# WARNING: make sure to run 'make infer' first to generate the npy files for make gen
-gen:
+# WARNING: make sure to run 'make gen' first to generate the npy files for make gen
+play-gen-gif:
+	echo "make sure to run on hpc dtu gui with graphics support and that you use 'vglrun' before python3 call!"
+	echo "WARNING: run 'make gen' first to generate the npy files for make gen"
+	cd $(ROOT_DIR) && vglrun ${PYTHON_BIN} -m datasets.motionx_explorer \
+	--model_path ${MODEL_DIR} \
+	--which_epoch ${EPOCH} \
+	--prompt "${PROMPT}" \
+	--display_mesh \
+	--save_gif \
+	--max_t ${FRAMES} \
+
+play-gen-gui:
 	echo "make sure to run on hpc dtu gui with graphics support and that you use 'vglrun' before python3 call!"
 	echo "WARNING: run 'make infer' first to generate the npy files for make gen"
 	cd $(ROOT_DIR) && ${PYTHON_BIN} -m datasets.motionx_explorer \
 	--model_path ${MODEL_DIR} \
-	--prompt "a_person_walking_happily" \
+	--which_epoch ${EPOCH} \
+	--prompt "${PROMPT}" \
 	--display_mesh \
-	--min_t 0 \
-	--max_t 60 \
+	--max_t ${FRAMES} \
+
+# smpl-x displays poses from seq_file as meshes
+play-gt-gif:
+	cd $(ROOT_DIR) && vglrun ${PYTHON_BIN} -m datasets.motionx_explorer \
+	--seq_file ${GT_FILE} \
+	--display_mesh \
 	--save_gif \
+	--max_t ${FRAMES} \
+
+play-gt-gui:
+	cd $(ROOT_DIR) && vglrun ${PYTHON_BIN} -m datasets.motionx_explorer \
+	--seq_file ${GT_FILE} \
+	--display_mesh \
+	--max_t ${FRAMES} \
+
+gen: gen-npy play-gen-gif
 
 aug:
 	cd $(ROOT_DIR) && ${PYTHON_BIN} -m Motion-X.mocap-dataset-process.face_motion_augmentation \
-
-# smpl-x displays poses from seq_file as meshes
-play:
-	cd $(ROOT_DIR) && vglrun ${PYTHON_BIN} -m datasets.motionx_explorer \
-	--seq_file "s5/airplane_pass_1" \
-	--display_mesh \
-	--save_gif \
 
 print-data:
 	cd $(ROOT_DIR) && ${PYTHON_BIN} -m datasets.motionx_explorer \

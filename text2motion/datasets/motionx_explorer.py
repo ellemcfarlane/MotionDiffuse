@@ -1,6 +1,8 @@
 import argparse
 import logging as log
 import os
+import time
+from collections import defaultdict
 from os.path import join as pjoin
 from typing import Dict, Optional, Tuple
 
@@ -42,7 +44,7 @@ NUM_BODY_JOINTS = 23 - 2  # SMPL has hand joints but we're replacing them with m
 NUM_JAW_JOINTS = 1 # 1x3 total jaw dims
 # Motion-X paper says there
 NUM_HAND_JOINTS = 15 # x2 for each hand -> 30x3 total hand dims
-NUM_JOINTS = NUM_BODY_JOINTS + NUM_HAND_JOINTS * 2 + NUM_JAW_JOINTS
+NUM_JOINTS = NUM_BODY_JOINTS + NUM_HAND_JOINTS * 2 + NUM_JAW_JOINTS # 21 + 30 + 1 = 52
 NUM_FACIAL_EXPRESSION_DIMS = 50  # as per Motion-X paper, but why is default 10 in smplx code then?
 FACE_SHAPE_DIMS = 100
 BODY_SHAPE_DIMS = 10 # betas
@@ -60,6 +62,22 @@ pose_type_to_dims = {
     "trans": TRANS_DIMS * 1,
 }
 
+def names_to_arrays(root_dir, names, drop_shapes=True):
+    all_arrays = []
+    for name in names:
+        # Load each NumPy array and add it to the list
+        array = np.load(pjoin(f"{root_dir}/joints", f"{name}.npy"))
+        # drop shapes -> 212 dims
+        if drop_shapes:
+            array = drop_shapes_from_motion_arr(array)
+        all_arrays.append(array)
+    return all_arrays
+
+def get_seq_names(file_path):
+    with open(file_path, "r") as f:
+        names = f.readlines()
+    names = [name.strip() for name in names]
+    return names
 
 def get_data_path(dataset_dir: str, seq: str, file: str) -> str:
     # MY_REPO/face_motion_data/smplx_322/GRAB/s1/airplane_fly_1.npy
@@ -138,6 +156,72 @@ def load_label(dataset_dir: str, seq: str, file_path: str) -> Dict[str, str]:
         emotion_label = file.read()
     return {"action": action_label, "emotion": emotion_label}
 
+
+def label_code(full_label):
+    # take first 3 letters of label
+    # surprise -> sur
+    # airplane -> air
+    return full_label[:3]
+
+def get_seq_type(motion_label_dir, file_name):
+    # e.g. s5/airplane_fly_1 -> airplane fly (motion label)
+    seq_type_path = pjoin(motion_label_dir, f"{file_name}.txt")
+    with open(seq_type_path, 'r') as f:
+        seq_type = f.readline().strip()
+    return seq_type
+
+def calc_mean_stddev_pose(arrays):
+    # all_arrays = []
+    # for file_path in file_list:
+    #     # Load each NumPy array and add it to the list
+    #     array = np.load(file_path)
+    #     all_arrays.append(array)
+    
+    # Concatenate all arrays along the first axis (stacking them on top of each other)
+    concatenated_arrays = np.concatenate(arrays, axis=0)
+    # Calculate the mean and standard deviation across all arrays
+    mean = np.mean(concatenated_arrays, axis=0)
+    stddev = np.std(concatenated_arrays, axis=0)
+    
+    return mean, stddev
+
+def get_info_from_file(file_path, emotions_label_dir, motion_label_dir):
+    # train_names = get_seq_names(pjoin(data_dir, "train.txt"))
+    names = get_seq_names(file_path)
+    seq_type_to_emotions = defaultdict(set)
+    emotions_count = defaultdict(int)
+    seq_type_count = defaultdict(int)
+    obj_count = defaultdict(int)
+    code_to_label = {}
+    emotion_to_names = defaultdict(list)
+    n_seq = len(names)
+    for name in names:
+        seq_type = get_seq_type(motion_label_dir, name)
+        emotion = load_label_from_file(pjoin(emotions_label_dir, f"{name}.txt"))
+        object_ = seq_type.split(" ")[0]
+        seq_type_to_emotions[seq_type].add(emotion)
+        emo_code = label_code(emotion)
+        emotions_count[emo_code] += 1
+        seq_type_count[seq_type] += 1
+        obj_code = label_code(object_)
+        obj_count[label_code(object_)] += 1
+        code_to_label[emo_code] = emotion
+        code_to_label[obj_code] = object_
+        emotion_to_names[emo_code].append(name)
+    unique_emotions = set([code_to_label[code] for code in emotions_count])
+    info_dict = {
+        "seq_type_to_emotions": seq_type_to_emotions,
+        "emotions_count": emotions_count,
+        "seq_type_count": seq_type_count,
+        "obj_count": obj_count,
+        "code_to_label": code_to_label,
+        "emotion_to_names": emotion_to_names,
+        "unique_emotions": unique_emotions,
+        "n_seq": n_seq,
+        "code_to_label": code_to_label,
+    }
+    return info_dict 
+
 def to_smplx_dict(motion_dict: Dict[str, Tensor], timestep_range: Optional[Tuple[int, int]] = None) -> Dict[str, Tensor]:
     if timestep_range is None:
         # get all timesteps
@@ -171,6 +255,130 @@ def smplx_dict_to_array(smplx_dict):
     smplx_array = torch.cat(smplx_array, dim=1)
     return smplx_array
 
+def save_gif(gif_path, gif_frames, duration=0.01):
+    if gif_frames:
+        print(f"Saving GIF with {len(gif_frames)} frames to {gif_path}")
+        imageio.mimsave(uri=gif_path, ims=gif_frames, duration=duration)
+    else:
+        print("No frames to save.")
+
+# based on https://github.com/vchoutas/smplx/blob/main/examples/demo.py
+def render_meshes(output, should_save_gif=False, gif_path=None):
+    should_display = not should_save_gif
+    vertices_list = output.vertices.detach().cpu().numpy().squeeze()
+    joints_list = output.joints.detach().cpu().numpy().squeeze()
+    # TODO (elmc): why do I wrap these in a list again?
+    if len(vertices_list.shape) == 2:
+        vertices_list = [vertices_list]
+        joints_list = [joints_list]
+    scene = pyrender.Scene()
+    if should_display:
+        viewer = pyrender.Viewer(scene, run_in_thread=True)
+
+    mesh_node = None
+    joints_node = None
+    # Rotation matrix (90 degrees around the X-axis)
+    rot = trimesh.transformations.rotation_matrix(np.radians(90), [1, 0, 0])
+    gif_frames = []
+    if should_save_gif:
+        os.makedirs(os.path.dirname(gif_path), exist_ok=True)
+    try:
+        for i in tqdm(range(len(vertices_list))):
+            vertices = vertices_list[i]
+            joints = joints_list[i]
+            # print("Vertices shape =", vertices.shape)
+            # print("Joints shape =", joints.shape)
+
+            # from their demo script
+            plotting_module = "pyrender"
+            plot_joints = False
+            if plotting_module == "pyrender":
+                vertex_colors = np.ones([vertices.shape[0], 4]) * [0.3, 0.3, 0.3, 0.8]
+                tri_mesh = trimesh.Trimesh(vertices, model.faces, vertex_colors=vertex_colors)
+
+                # Apply rotation
+                tri_mesh.apply_transform(rot)
+                ##### RENDER LOCK #####
+                if should_display:
+                    viewer.render_lock.acquire()
+                if mesh_node:
+                    scene.remove_node(mesh_node)
+                mesh = pyrender.Mesh.from_trimesh(tri_mesh)
+                mesh_node = scene.add(mesh)
+
+                camera = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.0)
+                min_bound, max_bound = mesh.bounds
+
+                # Calculate the center of the bounding box
+                center = (min_bound + max_bound) / 2
+
+                # Calculate the extents (the dimensions of the bounding box)
+                extents = max_bound - min_bound
+
+                # Estimate a suitable distance
+                distance = max(extents) * 2  # Adjust the multiplier as needed
+
+                # Create a camera pose matrix
+                cam_pose = np.array(
+                    [
+                        [1.0, 0, 0, center[0]],
+                        [0, 1.0, 0, center[1]-1.0],
+                        [0, 0, 1.0, center[2] + distance + 0.5],
+                        [0, 0, 0, 1],
+                    ]
+                )
+                # Rotate around X-axis
+                # Rotate around X-axis
+                angle = np.radians(90)
+                cos_angle = np.cos(angle)
+                sin_angle = np.sin(angle)
+                rot_x = np.array([
+                    [1, 0,        0,         0],
+                    [0, cos_angle, -sin_angle, 0],
+                    [0, sin_angle, cos_angle,  0],
+                    [0, 0,        0,         1]
+                ])
+                cam_pose = np.matmul(cam_pose, rot_x)
+                cam_pose[:3, 3] += np.array([0, -2.5, -3.5])
+
+                scene.add(camera, pose=cam_pose)
+
+                # Add light for better visualization
+                light = pyrender.DirectionalLight(color=np.ones(3), intensity=2.0)
+                scene.add(light, pose=cam_pose)
+
+                # TODO: rotation doesn't work here, so appears sideways
+                if plot_joints:
+                    sm = trimesh.creation.uv_sphere(radius=0.005)
+                    sm.visual.vertex_colors = [0.9, 0.1, 0.1, 1.0]
+                    tfs = np.tile(np.eye(4), (len(joints), 1, 1))
+                    # tfs[:, :3, 3] = joints
+                    for i, joint in enumerate(joints):
+                        tfs[i, :3, :3] = rot[:3, :3]
+                        tfs[i, :3, 3] = joint
+                    joints_pcl = pyrender.Mesh.from_trimesh(sm, poses=tfs)
+                    if joints_node:
+                        scene.remove_node(joints_node)
+                    joints_node = scene.add(joints_pcl)
+                if should_save_gif:
+                    r = pyrender.OffscreenRenderer(viewport_width=640, viewport_height=480)
+                    color, _ = r.render(scene)
+                    gif_frames.append(color)
+                    r.delete()  # Free up the resources
+                ###### RENDER LOCK RELEASE #####
+                if should_display:
+                    viewer.render_lock.release()
+    except KeyboardInterrupt:
+        if should_display:
+            viewer.close_external()
+        save_gif(gif_path, gif_frames)
+    finally:
+        save_gif(gif_path, gif_frames)
+
+def get_numpy_file_path(prompt, epoch, n_frames):
+    # e.g. "airplane_fly_1_1000_60f.npy"
+    prompt_no_spaces = prompt.replace(' ', '_')
+    return f"{prompt_no_spaces}_{epoch}_{n_frames}f"
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -232,11 +440,18 @@ if __name__ == "__main__":
         default=False,
         help="Save gif if this flag is present"
     )
+    # add which_epoch
+    parser.add_argument(
+        "-we",
+        "--which_epoch",
+        type=str,
+        required=True,
+        help="which epoch to load",
+    )
     args = parser.parse_args()
 
     prompt = args.prompt
     is_inference = len(prompt) > 0
-
     if args.seq_file != "" and args.prompt != "":
         log.error("cannot provide both prompt and seq_file; if trying to verify model inference, use --prompt, otherwise specify numpy --seq_file name to display")
         exit(1)
@@ -249,71 +464,91 @@ if __name__ == "__main__":
         motion_dir = pjoin(data_root, 'joints')
     else:
         log.info(f"converting prompt into file name")
-        name = args.prompt.replace(' ', '_')
+        name = get_numpy_file_path(prompt, args.which_epoch, args.max_t - args.min_t)
         model_type = args.model_path
         motion_dir = pjoin(model_type, 'outputs')
     motion_path = pjoin(motion_dir, name + '.npy')
     log.info(f"loading motion from {motion_path}")
     motion_arr = np.load(motion_path)
-    # drop shapes for ground-truth to have same dimensionality as inference
-    # for fair comparisons and reducing bugs
-    if not is_inference:
-        # directly get smplx dimensionality by dropping body and face shape data
-        print("warning, dropping body and face shape data")
-        motion_arr = drop_shapes_from_motion_arr(motion_arr)
-        assert motion_arr.shape[1] == 212, f"expected 212 dims, got {motion_arr.shape[1]}"
+    t = 999
+    mean_path = '/work3/s222376/MotionDiffuse2/text2motion/checkpoints/grab/md_fulem_2g_excl_196_seed42/meta/mean.npy'
+    std_path = '/work3/s222376/MotionDiffuse2/text2motion/checkpoints/grab/md_fulem_2g_excl_196_seed42/meta/std.npy'
+    mean = np.load(mean_path)
+    std = np.load(std_path)
+    # do range skipping by 100
+    list_ = [t for t in range(10, 91, 10)]
+    list_ += [t for t in range(100, 200, 30)]
+    for t in list_:
+        name = f"sample_tensor([{t}])"
+        # breakpoint()
+        motion_arr = np.load(f"/work3/s222376/MotionDiffuse2/text2motion/generation_samples/{name}.npy")
+        motion_arr = np.squeeze(motion_arr)
 
-    # our MotionDiffuse predicts motion data that doesn't include face and body shape
-    motion_dict = motion_arr_to_dict(motion_arr, shapes_dropped=True)
-    n_points = len(motion_dict["pose_body"])
+        motion_arr = motion_arr * std + mean
+        # drop shapes for ground-truth to have same dimensionality as inference
+        # for fair comparisons and reducing bugs
+        if not is_inference:
+            # directly get smplx dimensionality by dropping body and face shape data
+            print("warning, dropping body and face shape data")
+            motion_arr = drop_shapes_from_motion_arr(motion_arr)
+            assert motion_arr.shape[1] == 212, f"expected 212 dims, got {motion_arr.shape[1]}"
 
-    min_t = args.min_t
-    max_t = args.max_t or n_points
+        # our MotionDiffuse predicts motion data that doesn't include face and body shape
+        motion_dict = motion_arr_to_dict(motion_arr, shapes_dropped=True)
+        n_points = len(motion_dict["pose_body"])
 
-    timestep_range = (min_t, max_t)
+        min_t = args.min_t
+        max_t = args.max_t or n_points
+        if max_t > n_points:
+            max_t = n_points
 
-    log.info(f"POSES: {n_points}")
-    # checks data has expected shape
-    tot_dims = 0
-    for key in motion_dict:
-        dims = motion_dict[key].shape[1]
-        exp_dims = pose_type_to_dims.get(key)
-        tot_dims += motion_dict[key].shape[1]
-        log.info(f"{key}: {motion_dict[key].shape}, dims {dims}, exp: {exp_dims}")
-    log.info(f"total MOTION-X dims: {tot_dims}\n")
+        timestep_range = (min_t, max_t)
+        frames = max_t - min_t
+        log.info(f"POSES: {n_points}")
+        # checks data has expected shape
+        tot_dims = 0
+        for key in motion_dict:
+            dims = motion_dict[key].shape[1]
+            exp_dims = pose_type_to_dims.get(key)
+            tot_dims += motion_dict[key].shape[1]
+            log.info(f"{key}: {motion_dict[key].shape}, dims {dims}, exp: {exp_dims}")
+        log.info(f"total MOTION-X dims: {tot_dims}\n")
 
-    smplx_params = to_smplx_dict(motion_dict, timestep_range)
-    tot_smplx_dims = 0
-    for key in smplx_params:
-        tot_smplx_dims += smplx_params[key].shape[1]
-        log.info(f"{key}: {smplx_params[key].shape}")
-    log.info(f"TOTAL SMPLX dims: {tot_smplx_dims}\n")
+        smplx_params = to_smplx_dict(motion_dict, timestep_range)
+        tot_smplx_dims = 0
+        for key in smplx_params:
+            tot_smplx_dims += smplx_params[key].shape[1]
+            log.info(f"{key}: {smplx_params[key].shape}")
+        log.info(f"TOTAL SMPLX dims: {tot_smplx_dims}\n")
 
-    if not is_inference:
-        action_label_path = pjoin(data_root, 'texts', name + '.txt')
-        action_label = load_label_from_file(action_label_path)
-        emotion_label_path = pjoin(data_root, 'face_texts', name + '.txt')
-        emotion_label = load_label_from_file(emotion_label_path)
-        log.info(f"action: {action_label}")
-        log.info(f"emotion: {emotion_label}")
-    
-    if args.display_mesh:
-        model_folder = os.path.join(MY_REPO, MODELS_DIR, "smplx")
-        batch_size = max_t - min_t
-        log.info(f"calculating mesh with batch size {batch_size}")
-        model = smplx.SMPLX(
-            model_folder,
-            use_pca=False, # our joints are not in pca space
-            num_expression_coeffs=NUM_FACIAL_EXPRESSION_DIMS,
-            batch_size=batch_size,
-        )
-        output = model.forward(**smplx_params, return_verts=True)
-        log.info(f"output size {output.vertices.shape}")
-        log.info(f"output size {output.joints.shape}")
-        log.info("rendering mesh")
-        model_name = args.model_path.split('/')[-1] if args.model_path else "ground_truth"
-        gif_path = f"gifs/{model_name}/{name}.gif"
-        render_meshes(model, output, gif_path=gif_path, should_save_gif=args.save_gif)
-        log.warning(
-            "if you don't see the mesh animation, make sure you are running on graphics compatible DTU machine (vgl xterm)."
-        )
+        if not is_inference:
+            action_label_path = pjoin(data_root, 'texts', name + '.txt')
+            action_label = load_label_from_file(action_label_path)
+            emotion_label_path = pjoin(data_root, 'face_texts', name + '.txt')
+            emotion_label = load_label_from_file(emotion_label_path)
+            log.info(f"action: {action_label}")
+            log.info(f"emotion: {emotion_label}")
+
+        if is_inference:
+            emotion_label = args.prompt.split(' ')[0]
+        
+        if args.display_mesh:
+            model_folder = os.path.join(MY_REPO, MODELS_DIR, "smplx")
+            batch_size = max_t - min_t
+            log.info(f"calculating mesh with batch size {batch_size}")
+            model = smplx.SMPLX(
+                model_folder,
+                use_pca=False, # our joints are not in pca space
+                num_expression_coeffs=NUM_FACIAL_EXPRESSION_DIMS,
+                batch_size=batch_size,
+            )
+            output = model.forward(**smplx_params, return_verts=True)
+            log.info(f"output size {output.vertices.shape}")
+            log.info(f"output size {output.joints.shape}")
+            log.info("rendering mesh")
+            model_name = args.model_path.split('/')[-1] if args.model_path else "ground_truth"
+            gif_path = f"gifs/{model_name}/{name}_{emotion_label}.gif"
+            render_meshes(output, gif_path=gif_path, should_save_gif=args.save_gif)
+            log.warning(
+                "if you don't see the mesh animation, make sure you are running on graphics compatible DTU machine (vgl xterm)."
+            )

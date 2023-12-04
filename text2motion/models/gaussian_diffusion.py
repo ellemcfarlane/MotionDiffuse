@@ -4,12 +4,10 @@ This code is borrowed from https://github.com/openai/guided-diffusion/blob/main/
 
 import enum
 import math
+from abc import ABC, abstractmethod
 
 import numpy as np
 import torch as th
-
-
-from abc import ABC, abstractmethod
 import torch.distributed as dist
 
 
@@ -767,6 +765,10 @@ class GaussianDiffusion:
                 )
                 yield out
                 img = out["sample"]
+                # write sample to /work3/s222376/MotionDiffuse2/text2motion/generation_samples
+                # write torch tensor to numpy array
+                with open(f'/work3/s222376/MotionDiffuse2/text2motion/generation_samples/sample_{t}.npy', 'wb') as f:
+                    np.save(f, img.cpu().numpy())
 
     def ddim_sample(
         self,

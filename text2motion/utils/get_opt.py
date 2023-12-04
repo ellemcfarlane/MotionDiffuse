@@ -49,7 +49,7 @@ def get_opt(opt_path, device):
                 else:
                     opt_dict[key] = str(value)
 
-    opt_dict['which_epoch'] = 'latest'
+    # opt_dict['which_epoch'] = 'latest'
     if 'num_layers' not in opt_dict:
         opt_dict['num_layers'] = 8
     if 'latent_dim' not in opt_dict:
@@ -86,7 +86,7 @@ def get_opt(opt_path, device):
         # opt.joints_num = 72 # TODO (elmc): verify this BUT ALSO I'M NOT USING IT FOR NOW!
         opt.dim_pose = 212 # drop betas (body shape) and face-shape from Motion data (via to_smplx_params & smplx_dict_to_array method)
         # TOOD (elmc): verify this
-        opt.max_motion_length = 432
+        opt.max_motion_length = 196
     else:
         raise KeyError('Dataset not recognized')
 
