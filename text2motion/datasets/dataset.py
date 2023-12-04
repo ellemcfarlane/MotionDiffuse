@@ -166,7 +166,7 @@ class Text2MotionDataset(data.Dataset):
         assert len(motion) == max_motion_length
         "Z Normalization"
         # TODO (elmc): add standardization back in
-        # motion = (motion - self.mean) / self.std
+        motion = (motion - self.mean) / self.std
         # import pdb; pdb.set_trace()
         # epsilon = 1e-10  # A small number to prevent division by zero
         # adjusted_std = np.where(self.std == 0, epsilon, self.std)

@@ -1,0 +1,8 @@
+s1/airplane_fly_1
+s1/airplane_lift
+s1/airplane_offhand_1
+s1/airplane_pass_1
+s1/alarmclock_offhand_1
+s1/alarmclock_pass_1
+s1/alarmclock_see_1
+s1/apple_eat_1

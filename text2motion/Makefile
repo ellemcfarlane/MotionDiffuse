@@ -2,7 +2,7 @@
 ROOT_DIR:=$(shell git rev-parse --show-toplevel)/text2motion
 PYTHON_BIN:=/work3/s222376/MotionDiffuseNew/bin/python3
 EXP:=motiondiffuse
-
+SEED = 42
 MODEL_DIR:=checkpoints/grab/grab_baseline_dp_2gpu_8layers_1000_first
 
 infer:
@@ -18,9 +18,9 @@ eval:
 
 # TODO (elmc): increase batch_size from 1 when not debugging!!
 train:
-	echo "experiment name ${EXP}"
+	echo "experiment name md_${EXP}_seed${SEED}"
 	cd ${ROOT_DIR} && ${PYTHON_BIN} -m tools.train \
-	--name ${EXP} \
+	--name md_${EXP}_seed${SEED} \
 	--batch_size 1 \
 	--times 50 \
 	--num_epochs 50 \
@@ -30,9 +30,9 @@ train:
 	--data_parallel \
 	--gpu_id 0 1 \
 	--wandb_user "elles" \
-	--experiment_name ${EXP} \
+	--experiment_name md_${EXP}_seed${SEED} \
 	--log_every 50 \
-	--seed 42 \
+	--seed ${SEED} \
 	--use_wandb \
 
 # put the model your trained in MODEL_DIR (set at top of file) and generate poses with it conditioned on prompt
