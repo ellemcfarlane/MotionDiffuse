@@ -45,10 +45,12 @@ if __name__ == '__main__':
     opt.save_root = pjoin(opt.checkpoints_dir, opt.dataset_name, opt.name)
     opt.model_dir = pjoin(opt.save_root, 'model')
     opt.meta_dir = pjoin(opt.save_root, 'meta')
+    opt.noise_dir = pjoin(opt.save_root, 'noise')
 
     if rank == 0:
         os.makedirs(opt.model_dir, exist_ok=True)
         os.makedirs(opt.meta_dir, exist_ok=True)
+        os.makedirs(opt.noise_dir, exist_ok=True)
     if world_size > 1:
         dist.barrier()
     if opt.use_wandb:
