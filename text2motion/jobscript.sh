@@ -3,13 +3,13 @@
 ### –- specify queue --
 #BSUB -q gpuv100
 ### -- set the job Name --
-#BSUB -J noise_norm_small_1gpu
+#BSUB -J noise_norm_small_1gpu_shared
 ### -- ask for number of cores (default: 1) --
 #BSUB -n 4
 ### -- specify that the cores must be on the same host -- 
 #BSUB -R "span[hosts=1]"
 ### -- Select the resources: 1 gpu in exclusive process mode --
-#BSUB -gpu "num=1:mode=exclusive_process"
+#BSUB -gpu "num=1:mode=shared"
 ### -- set walltime limit: hh:mm --  maximum 24 hours for GPU-queues right now
 #BSUB -W 5:00
 # request 5GB of system-memory
@@ -37,4 +37,4 @@ module load cudnn/v7.6.5.32-prod-cuda-10.1
 echo "checking python bin location"
 which python3
 echo "training txt2motion diffusion model..."
-make train EXP=noise_norm_small_1gpu
+make train EXP=noise_norm_small_1gpu_shared
