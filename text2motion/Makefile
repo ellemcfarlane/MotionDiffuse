@@ -52,6 +52,9 @@ play:
 	--seq_file "s5/airplane_pass_1" \
 	--display_mesh \
 
+aug:
+	cd $(ROOT_DIR) && ${PYTHON_BIN} -m Motion-X.mocap-dataset-process.face_motion_augmentation \
+
 print-data:
 	cd $(ROOT_DIR) && ${PYTHON_BIN} -m datasets.motionx_explorer \
 

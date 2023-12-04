@@ -40,9 +40,9 @@ if __name__ == "__main__":
     assert stddev.shape[0] == pose_dims
     # check if stddev has 0's
     stdev_zeros = np.where(stddev == 0)
-    print(f"stddev zeros: {stdev_zeros}")
-    # replace 0's with 1's
-    stddev[stdev_zeros] = 1
+    n_zeros = len(stdev_zeros[0])
+    print(f"idx of stddev where 0: {stdev_zeros}")
+    assert n_zeros == 0, "stddev has 0's, but it should not..."
     # save to ./data/GRAB/Mean.npy and ./data/GRAB/Std.npy
     mean_write_path = pjoin("./data/GRAB", "Mean.npy")
     stddev_write_path = pjoin("./data/GRAB", "Std.npy")
