@@ -122,8 +122,8 @@ class Text2MotionDataset(data.Dataset):
 
             # assert 4 + (joints_num - 1) * 9 + joints_num * 3 + 4 == mean.shape[-1]
             # TODO (elmc): add back in
-            # np.save(pjoin(opt.meta_dir, 'mean.npy'), mean)
-            # np.save(pjoin(opt.meta_dir, 'std.npy'), std)
+        np.save(pjoin(opt.meta_dir, 'mean.npy'), mean)
+        np.save(pjoin(opt.meta_dir, 'std.npy'), std)
 
         self.mean = mean
         self.std = std

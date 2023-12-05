@@ -44,13 +44,17 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--opt_path', type=str, help='Opt path')
     parser.add_argument('--text', type=str, default="", help='Text description for motion generation')
-    parser.add_argument('--motion_length', type=int, default=196, help='Number of frames for motion generation')
+    parser.add_argument('--motion_length', type=int, default=60, help='Number of frames for motion generation')
     parser.add_argument('--result_path', type=str, default="test_sample.gif", help='Path to save generation result')
     parser.add_argument('--npy_path', type=str, default="", help='Path to save 3D keypoints sequence')
     parser.add_argument('--gpu_id', type=int, default=-1, help="which gpu to use")
+    parser.add_argument('--seed', type=int, default=0, help="random seed")
     args = parser.parse_args()
     
+    set_random_seed(args.seed)
+    print(f"set random seed to {args.seed}")
     device = torch.device('cuda:%d' % args.gpu_id if args.gpu_id != -1 else 'cpu')
+    print(args.opt_path)
     opt = get_opt(args.opt_path, device)
     opt.do_denoise = True
 
@@ -91,7 +95,7 @@ if __name__ == '__main__':
             pred_motions = trainer.generate(caption, m_lens, opt.dim_pose)
             motion = pred_motions[0].cpu().numpy()
             # TODO (elmc): add back in
-            # motion = motion * std + mean
+            motion = motion * std + mean
             title = args.text + " #%d" % motion.shape[0]
             print(f"trying to plot {title}")
             # write motion to numpy file

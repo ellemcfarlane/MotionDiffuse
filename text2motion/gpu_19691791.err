@@ -1,0 +1,29 @@
+Loaded module: cuda/10.1
+Loaded module: cudnn/v7.6.5.32-prod-cuda-10.1
+2023-12-05 06:58:11,558 - root - INFO - MY_REPO: /dtu/blackhole/13/181395/MotionDiffuse/text2motion
+usage: train.py [-h] [--name NAME] [--decomp_name DECOMP_NAME]
+                [--gpu_id GPU_ID [GPU_ID ...]] [--distributed]
+                [--data_parallel] [--dataset_name DATASET_NAME]
+                [--checkpoints_dir CHECKPOINTS_DIR]
+                [--unit_length UNIT_LENGTH] [--max_text_len MAX_TEXT_LEN]
+                [--text_enc_mod TEXT_ENC_MOD] [--estimator_mod ESTIMATOR_MOD]
+                [--dim_text_hidden DIM_TEXT_HIDDEN]
+                [--dim_att_vec DIM_ATT_VEC] [--dim_z DIM_Z]
+                [--n_layers_pri N_LAYERS_PRI] [--n_layers_pos N_LAYERS_POS]
+                [--n_layers_dec N_LAYERS_DEC]
+                [--dim_pri_hidden DIM_PRI_HIDDEN]
+                [--dim_pos_hidden DIM_POS_HIDDEN]
+                [--dim_dec_hidden DIM_DEC_HIDDEN]
+                [--dim_movement_enc_hidden DIM_MOVEMENT_ENC_HIDDEN]
+                [--dim_movement_dec_hidden DIM_MOVEMENT_DEC_HIDDEN]
+                [--dim_movement_latent DIM_MOVEMENT_LATENT]
+                [--num_layers NUM_LAYERS] [--latent_dim LATENT_DIM]
+                [--diffusion_steps DIFFUSION_STEPS] [--no_clip] [--no_eff]
+                [--num_epochs NUM_EPOCHS] [--lr LR] [--batch_size BATCH_SIZE]
+                [--times TIMES] [--feat_bias FEAT_BIAS] [--is_continue]
+                [--log_every LOG_EVERY] [--save_every_e SAVE_EVERY_E]
+                [--eval_every_e EVAL_EVERY_E] [--save_latest SAVE_LATEST]
+                [--use_wandb] [--wandb_user WANDB_USER]
+                [--experiment_name EXPERIMENT_NAME] [--seed SEED]
+train.py: error: argument --gpu_id: invalid int value: '1--experiment_name'
+make: *** [train] Error 2

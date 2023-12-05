@@ -1,18 +1,18 @@
 # get git root
 ROOT_DIR:=$(shell git rev-parse --show-toplevel)/text2motion
 SEED = 42
-MODEL_DIR:=checkpoints/grab/grab_baseline_dp_2gpu_8layers_1000_first
 
 PYTHON_BIN:=/dtu/blackhole/13/181395/MotionDiffuse/env/bin/python3
-EXP:=alexExp
+EXP:=GRABalldata
+MODEL_DIR:=checkpoints/grab/md_${EXP}_seed${SEED}
 
 infer:
 # checkpoints/t2m/t2m_motiondiffuse/opt.txt
 	cd ${ROOT_DIR} && ${PYTHON_BIN} -m tools.visualization \
-	--opt_path checkpoints/grab/md_${EXP}/opt.txt \
+	--opt_path checkpoints/grab/md_${EXP}_seed${SEED}/opt.txt \
 	--text "airplane pass" \
 	--seed 42 \
-	--npy_path checkpoints/grab/md_${EXP}/outputs \
+	--npy_path checkpoints/grab/md_${EXP}_seed${SEED}/outputs \
 
 eval:
 	cd ${ROOT_DIR} && ${PYTHON_BIN} -m tools.evaluation ${MODEL_DIR}/opt.txt \
@@ -22,7 +22,7 @@ train:
 	echo "experiment name md_${EXP}_seed${SEED}"
 	cd ${ROOT_DIR} && ${PYTHON_BIN} -m tools.train \
 	--name md_${EXP}_seed${SEED} \
-	--batch_size 1 \
+	--batch_size 128 \
 	--times 50 \
 	--num_epochs 50 \
 	--dataset_name grab \
@@ -30,7 +30,6 @@ train:
 	--diffusion_steps 1000 \
 	--data_parallel \
 	--gpu_id 0 1 \
-	--wandb_user "elles" \
 	--experiment_name md_${EXP}_seed${SEED} \
 	--log_every 50 \
 	--seed ${SEED} \
@@ -45,7 +44,7 @@ gen:
 	echo "make sure to run on hpc dtu gui with graphics support and that you use 'vglrun' before python3 call!"
 	echo "WARNING: run 'make infer' first to generate the npy files for make gen"
 	cd $(ROOT_DIR) && vglrun ${PYTHON_BIN} -m datasets.motionx_explorer \
-	--model_path ${MODEL_DIR} \
+	--model_path checkpoints/grab/md_alexExp2fixedseed_seed42 \
 	--prompt "airplane pass" \
 	--display_mesh \
 	--min_t 0 \
@@ -60,23 +59,6 @@ play:
 aug:
 	cd $(ROOT_DIR) && ${PYTHON_BIN} -m Motion-X.mocap-dataset-process.face_motion_augmentation \
 
-# smpl-x displays poses from seq_file as meshes
-play:
-	cd $(ROOT_DIR) && vglrun ${PYTHON_BIN} -m datasets.motionx_explorer \
-	--seq_file "s5/airplane_pass_1" \
-	--display_mesh \
-
-print-data:
-	cd $(ROOT_DIR) && ${PYTHON_BIN} -m datasets.motionx_explorer \
-
-queue:
-	cd ${ROOT_DIR} && bsub < jobscript.sh
-
-w_stats:
-	cd ${ROOT_DIR} && ${PYTHON_BIN} -m datasets.statistics_writer \
-
-w_custom:
-	cd ${ROOT_DIR} && ${PYTHON_BIN} -m datasets.custom_data_writer \
 
 print-data:
 	cd $(ROOT_DIR) && ${PYTHON_BIN} -m datasets.motionx_explorer \

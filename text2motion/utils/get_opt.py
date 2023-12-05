@@ -86,7 +86,7 @@ def get_opt(opt_path, device):
         # opt.joints_num = 72 # TODO (elmc): verify this BUT ALSO I'M NOT USING IT FOR NOW!
         opt.dim_pose = 212 # drop betas (body shape) and face-shape from Motion data (via to_smplx_params & smplx_dict_to_array method)
         # TOOD (elmc): verify this
-        opt.max_motion_length = 400
+        opt.max_motion_length = 259
     else:
         raise KeyError('Dataset not recognized')
 

@@ -7,12 +7,12 @@ from motionx_explorer import motion_arr_to_dict
 if __name__ == "__main__":
     print("Printing the values from a motion sequence")
     
-    motionPath = "/dtu/blackhole/13/181395/Motion-X/data/motion_data/joint/HAA500/subset_0001/Badminton_Underswing_clip_1.npy"
+    motionPath = "/dtu/blackhole/13/181395/HumanTOMATO/src/tomato_represenation/data/motion_data/joint/GRAB/GRAB_motion/s1/airplane_fly_1.npy"
 
 
     load_motion = np.load(motionPath)
 
-    dicc_322 = motion_arr_to_dict(load_motion, shapes_droped=False)
+    dicc_322 = motion_arr_to_dict(load_motion, shapes_dropped=False)
 
     print("---------------------------------------------------------") 
     print("Motionpath: ", motionPath)
