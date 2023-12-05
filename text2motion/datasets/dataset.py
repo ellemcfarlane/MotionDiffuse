@@ -42,7 +42,7 @@ class Text2MotionDataset(data.Dataset):
                 if self.opt.dataset_name.lower() == 'grab':
                     motion = drop_shapes_from_motion_arr(motion)
                     assert motion.shape[-1] == opt.dim_pose, f"motion shape {motion.shape} does not match dim_pose {opt.dim_pose}"
-                    print(f"grab motion shape: {motion.shape}")
+                    
                 print(f"len of motion: {len(motion)}")
                 # TODO (elmc): verify we don't need this for GRAB data
                 # if (len(motion)) < min_motion_len or (len(motion) >= 200):

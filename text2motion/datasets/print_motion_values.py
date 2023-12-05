@@ -7,14 +7,16 @@ from motionx_explorer import motion_arr_to_dict
 if __name__ == "__main__":
     print("Printing the values from a motion sequence")
     
-    motionPath = "/dtu/blackhole/13/181395/HumanTOMATO/src/tomato_represenation/data/motion_data/joint/GRAB/GRAB_motion/s1/airplane_fly_1.npy"
-
+    motionPath = "/dtu/blackhole/13/181395/MotionDiffuse/text2motion/data/GRAB/joints/s1/airplane_fly_1.npy"
+    motionPath = "/dtu/blackhole/13/181395/MotionExperiments/text2motion/data/Motionx/joints/GRAB/s1/airplane_fly_1.npy"
+    motionPath = "/dtu/blackhole/13/181395/MotionExperiments/text2motion/data/Motionx/joints/dance/subset_0000/A_Han_And_Tang_Dance_That_You_Will_Never_Get_Tired_Of_clip_1.npy"
 
     load_motion = np.load(motionPath)
-
+    
     dicc_322 = motion_arr_to_dict(load_motion, shapes_dropped=False)
 
     print("---------------------------------------------------------") 
+    print("Shape: ", torch.tensor(load_motion).size())
     print("Motionpath: ", motionPath)
     print("---------------------------------------------------------")
     print("ORIGINAL 322 DATA")

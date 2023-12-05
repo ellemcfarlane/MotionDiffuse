@@ -3,16 +3,16 @@ ROOT_DIR:=$(shell git rev-parse --show-toplevel)/text2motion
 SEED = 42
 
 PYTHON_BIN:=/dtu/blackhole/13/181395/MotionDiffuse/env/bin/python3
-EXP:=GRABalldata
+EXP:=alexecp
 MODEL_DIR:=checkpoints/grab/md_${EXP}_seed${SEED}
 
 infer:
 # checkpoints/t2m/t2m_motiondiffuse/opt.txt
 	cd ${ROOT_DIR} && ${PYTHON_BIN} -m tools.visualization \
-	--opt_path checkpoints/grab/md_${EXP}_seed${SEED}/opt.txt \
+	--opt_path checkpoints/grab/md_GRABalldata_seed42/opt.txt \
 	--text "airplane pass" \
 	--seed 42 \
-	--npy_path checkpoints/grab/md_${EXP}_seed${SEED}/outputs \
+	--npy_path checkpoints/grab/md_GRABalldata_seed42/outputs \
 
 eval:
 	cd ${ROOT_DIR} && ${PYTHON_BIN} -m tools.evaluation ${MODEL_DIR}/opt.txt \
@@ -24,12 +24,12 @@ train:
 	--name md_${EXP}_seed${SEED} \
 	--batch_size 128 \
 	--times 50 \
-	--num_epochs 50 \
+	--num_epochs 250 \
 	--dataset_name grab \
 	--num_layers 8 \
 	--diffusion_steps 1000 \
 	--data_parallel \
-	--gpu_id 0 1 \
+	--gpu_id 0 \
 	--experiment_name md_${EXP}_seed${SEED} \
 	--log_every 50 \
 	--seed ${SEED} \
