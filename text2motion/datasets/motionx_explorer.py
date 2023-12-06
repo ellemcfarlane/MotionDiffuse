@@ -197,6 +197,7 @@ def get_info_from_file(file_path, emotions_label_dir, motion_label_dir):
     obj_count = defaultdict(int)
     code_to_label = {}
     emotion_to_names = defaultdict(list)
+    n_seq = len(names)
     for name in names:
         seq_type = get_seq_type(motion_label_dir, name)
         emotion = load_label_from_file(pjoin(emotions_label_dir, f"{name}.txt"))
@@ -219,6 +220,8 @@ def get_info_from_file(file_path, emotions_label_dir, motion_label_dir):
         "code_to_label": code_to_label,
         "emotion_to_names": emotion_to_names,
         "unique_emotions": unique_emotions,
+        "n_seq": n_seq,
+        "code_to_label": code_to_label,
     }
     return info_dict 
 
@@ -375,6 +378,11 @@ def render_meshes(output, should_save_gif=False, gif_path=None):
     finally:
         save_gif(gif_path, gif_frames)
 
+def get_numpy_file_path(prompt, epoch, n_frames):
+    # e.g. "airplane_fly_1_1000_60f.npy"
+    prompt_no_spaces = prompt.replace(' ', '_')
+    return f"{prompt_no_spaces}_{epoch}_{n_frames}f"
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
@@ -435,6 +443,14 @@ if __name__ == "__main__":
         default=False,
         help="Save gif if this flag is present"
     )
+    # add which_epoch
+    parser.add_argument(
+        "-we",
+        "--which_epoch",
+        type=str,
+        required=True,
+        help="which epoch to load",
+    )
     args = parser.parse_args()
 
     # data_dir, seq, file = "kungfu", "subset_0000", "Aerial_Kick_Kungfu_Wushu_clip_13"
@@ -443,7 +459,6 @@ if __name__ == "__main__":
 
     prompt = args.prompt
     is_inference = len(prompt) > 0
-
     if args.seq_file != "" and args.prompt != "":
         log.error("cannot provide both prompt and seq_file; if trying to verify model inference, use --prompt, otherwise specify numpy --seq_file name to display")
         exit(1)
@@ -456,7 +471,7 @@ if __name__ == "__main__":
         motion_dir = pjoin(data_root, 'joints')
     else:
         log.info(f"converting prompt into file name")
-        name = args.prompt.replace(' ', '_')
+        name = get_numpy_file_path(prompt, args.which_epoch, args.max_t - args.min_t)
         model_type = args.model_path
         motion_dir = pjoin(model_type, 'outputs')
     motion_path = pjoin(motion_dir, name + '.npy')
@@ -524,7 +539,7 @@ if __name__ == "__main__":
         log.info(f"output size {output.joints.shape}")
         log.info("rendering mesh")
         model_name = args.model_path.split('/')[-1] if args.model_path else "ground_truth"
-        gif_path = f"gifs/{model_name}/{name}_{emotion_label}_{frames}f.gif"
+        gif_path = f"gifs/{model_name}/{name}_{emotion_label}.gif"
         render_meshes(output, gif_path=gif_path, should_save_gif=args.save_gif)
         log.warning(
             "if you don't see the mesh animation, make sure you are running on graphics compatible DTU machine (vgl xterm)."

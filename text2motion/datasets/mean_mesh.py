@@ -121,7 +121,34 @@ def render_mesh(model, output, should_save=False, save_path=None):
         if should_display:
             viewer.close_external()
 
-    
+# motion_arr is 212 dims (no shapes: aka no betas and no face shapes)
+def mesh_and_save(args, motion_arr, seq_name, model_name, emotion):
+    motion_dict = motion_arr_to_dict(motion_arr, shapes_dropped=True)
+    smplx_params = to_smplx_dict(motion_dict)
+    model_folder = "./models/smplx"
+    batch_size = 1
+    model = smplx.SMPLX(
+        model_folder,
+        use_pca=False, # our joints are not in pca space
+        num_expression_coeffs=NUM_FACIAL_EXPRESSION_DIMS,
+        batch_size=batch_size,
+    )
+    output = model.forward(**smplx_params, return_verts=True)
+    log.info(f"output size {output.vertices.shape}")
+    log.info(f"output size {output.joints.shape}")
+    log.info("rendering mesh")
+    base_file = args.file.split('.')[0]
+    # add {emotion}_{base_file} as a subfolder if it doesn't exist
+    subfolder = f"single_pose_imgs/{model_name}/{emotion}_{base_file}"
+    if not os.path.exists(subfolder):
+        os.makedirs(subfolder)
+    save_path = f"{subfolder}/{seq_name}_pose.png"
+    render_mesh(model, output, should_save=True, save_path=save_path)
+    log.warning(
+        "if you don't see the mesh animation, make sure you are running on graphics compatible DTU machine (vgl xterm)."
+    )
+    return subfolder
+        
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
@@ -177,28 +204,9 @@ if __name__ == "__main__":
         logging.info(f"{emotion} std: {std_dict['face_expr']}")
 
         logging.info(f"rendering mean mesh for {emotion} in {args.file}...")
+        subfolder = mesh_and_save(args, mean, "mean", args.model_path, emotion)
 
-        motion_dict = motion_arr_to_dict(mean, shapes_dropped=True)
-        smplx_params = to_smplx_dict(motion_dict)
-        model_folder = "./models/smplx"
-        batch_size = 1
-        model = smplx.SMPLX(
-            model_folder,
-            use_pca=False, # our joints are not in pca space
-            num_expression_coeffs=NUM_FACIAL_EXPRESSION_DIMS,
-            batch_size=batch_size,
-        )
-        output = model.forward(**smplx_params, return_verts=True)
-        log.info(f"output size {output.vertices.shape}")
-        log.info(f"output size {output.joints.shape}")
-        log.info("rendering mesh")
         model_name = args.model_path.split('/')[-1] if args.model_path else "ground_truth"
-        base_file = args.file.split('.')[0]
-        # add {emotion}_{base_file} as a subfolder if it doesn't exist
-        subfolder = f"single_pose_imgs/{model_name}/{emotion}_{base_file}"
-        if not os.path.exists(subfolder):
-            os.makedirs(subfolder)
-        save_path = f"{subfolder}/mean_pose.png"
         # write the sequence names in a metadata folder at subfolder
         metadata_folder = f"{subfolder}/metadata"
         if not os.path.exists(metadata_folder):
@@ -212,7 +220,12 @@ if __name__ == "__main__":
             f.write(f"std: {std_dict}\n")
             for name in names_with_emo:
                 f.write(f"{name}\n")
-        render_mesh(model, output, should_save=True, save_path=save_path)
-        log.warning(
-            "if you don't see the mesh animation, make sure you are running on graphics compatible DTU machine (vgl xterm)."
-        )
+        
+        # now plot mesh for each of the sequences
+        for i, arr in enumerate(arrays):
+            one_pose = arr[0]
+            one_pose = one_pose.reshape(1, -1)
+            name = names_with_emo[i]
+            # replace / with _
+            name = name.replace("/", "_")
+            subfolder = mesh_and_save(args, one_pose, name, args.model_path, emotion)

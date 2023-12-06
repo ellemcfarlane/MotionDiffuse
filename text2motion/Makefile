@@ -4,9 +4,9 @@ PYTHON_BIN:=/work3/s222376/MotionDiffuseNew/bin/python3
 EXP:=motiondiffuse
 SEED = 42
 MODEL_DIR:=checkpoints/grab/md_fulem_2g_excl_196_seed42
-EPOCH:=latest
-PROMPT:='surprise airplane pass'
-GT_FILE=s2/cubesmall_lift
+EPOCH:=ckpt_e010
+PROMPT:=happiness airplane pass
+GT_FILE=s2/cubesmall_lift # ground-truth
 FRAMES=60
 MEAN_EMOTION=surprise
 
@@ -39,12 +39,11 @@ train: w_stats
 	--log_every 50 \
 	--seed ${SEED} \
 	--use_wandb \
-	--which_epoch ${EPOCH} \
 
 # get makes model generate seq according to text and writes result to npy file
 gen-npy:
 # checkpoints/t2m/t2m_motiondiffuse/opt.txt
-	cd ${ROOT_DIR} && ${PYTHON_BIN} -m tools.visualization \
+	cd ${ROOT_DIR} && ${PYTHON_BIN} -m tools.inference \
 	--opt_path ${MODEL_DIR}/opt.txt \
 	--which_epoch ${EPOCH} \
 	--text "${PROMPT}" \
@@ -60,6 +59,7 @@ play-gen-gif:
 	echo "WARNING: run 'make gen' first to generate the npy files for make gen"
 	cd $(ROOT_DIR) && vglrun ${PYTHON_BIN} -m datasets.motionx_explorer \
 	--model_path ${MODEL_DIR} \
+	--which_epoch ${EPOCH} \
 	--prompt "${PROMPT}" \
 	--display_mesh \
 	--save_gif \
@@ -70,6 +70,7 @@ play-gen-gui:
 	echo "WARNING: run 'make infer' first to generate the npy files for make gen"
 	cd $(ROOT_DIR) && vglrun ${PYTHON_BIN} -m datasets.motionx_explorer \
 	--model_path ${MODEL_DIR} \
+	--which_epoch ${EPOCH} \
 	--prompt "${PROMPT}" \
 	--display_mesh \
 	--max_t ${FRAMES} \
