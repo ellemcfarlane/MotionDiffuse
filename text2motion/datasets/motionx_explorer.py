@@ -47,7 +47,7 @@ NUM_BODY_JOINTS = 23 - 2  # SMPL has hand joints but we're replacing them with m
 NUM_JAW_JOINTS = 1 # 1x3 total jaw dims
 # Motion-X paper says there
 NUM_HAND_JOINTS = 15 # x2 for each hand -> 30x3 total hand dims
-NUM_JOINTS = NUM_BODY_JOINTS + NUM_HAND_JOINTS * 2 + NUM_JAW_JOINTS
+NUM_JOINTS = NUM_BODY_JOINTS + NUM_HAND_JOINTS * 2 + NUM_JAW_JOINTS # 21 + 60 + 1 = 82
 NUM_FACIAL_EXPRESSION_DIMS = 50  # as per Motion-X paper, but why is default 10 in smplx code then?
 FACE_SHAPE_DIMS = 100
 BODY_SHAPE_DIMS = 10 # betas
@@ -477,71 +477,86 @@ if __name__ == "__main__":
     motion_path = pjoin(motion_dir, name + '.npy')
     log.info(f"loading motion from {motion_path}")
     motion_arr = np.load(motion_path)
-    # drop shapes for ground-truth to have same dimensionality as inference
-    # for fair comparisons and reducing bugs
-    if not is_inference:
-        # directly get smplx dimensionality by dropping body and face shape data
-        print("warning, dropping body and face shape data")
-        motion_arr = drop_shapes_from_motion_arr(motion_arr)
-        assert motion_arr.shape[1] == 212, f"expected 212 dims, got {motion_arr.shape[1]}"
+    t = 999
+    mean_path = '/work3/s222376/MotionDiffuse2/text2motion/checkpoints/grab/md_fulem_2g_excl_196_seed42/meta/mean.npy'
+    std_path = '/work3/s222376/MotionDiffuse2/text2motion/checkpoints/grab/md_fulem_2g_excl_196_seed42/meta/std.npy'
+    mean = np.load(mean_path)
+    std = np.load(std_path)
+    # do range skipping by 100
+    list_ = [t for t in range(10, 91, 10)]
+    list_ += [t for t in range(100, 200, 30)]
+    for t in list_:
+        name = f"sample_tensor([{t}])"
+        # breakpoint()
+        motion_arr = np.load(f"/work3/s222376/MotionDiffuse2/text2motion/generation_samples/{name}.npy")
+        motion_arr = np.squeeze(motion_arr)
 
-    # our MotionDiffuse predicts motion data that doesn't include face and body shape
-    motion_dict = motion_arr_to_dict(motion_arr, shapes_dropped=True)
-    n_points = len(motion_dict["pose_body"])
+        motion_arr = motion_arr * std + mean
+        # drop shapes for ground-truth to have same dimensionality as inference
+        # for fair comparisons and reducing bugs
+        if not is_inference:
+            # directly get smplx dimensionality by dropping body and face shape data
+            print("warning, dropping body and face shape data")
+            motion_arr = drop_shapes_from_motion_arr(motion_arr)
+            assert motion_arr.shape[1] == 212, f"expected 212 dims, got {motion_arr.shape[1]}"
 
-    min_t = args.min_t
-    max_t = args.max_t or n_points
-    if max_t > n_points:
-        max_t = n_points
+        # our MotionDiffuse predicts motion data that doesn't include face and body shape
+        motion_dict = motion_arr_to_dict(motion_arr, shapes_dropped=True)
+        n_points = len(motion_dict["pose_body"])
 
-    timestep_range = (min_t, max_t)
-    frames = max_t - min_t
-    log.info(f"POSES: {n_points}")
-    # checks data has expected shape
-    tot_dims = 0
-    for key in motion_dict:
-        dims = motion_dict[key].shape[1]
-        exp_dims = pose_type_to_dims.get(key)
-        tot_dims += motion_dict[key].shape[1]
-        log.info(f"{key}: {motion_dict[key].shape}, dims {dims}, exp: {exp_dims}")
-    log.info(f"total MOTION-X dims: {tot_dims}\n")
+        min_t = args.min_t
+        max_t = args.max_t or n_points
+        if max_t > n_points:
+            max_t = n_points
 
-    smplx_params = to_smplx_dict(motion_dict, timestep_range)
-    tot_smplx_dims = 0
-    for key in smplx_params:
-        tot_smplx_dims += smplx_params[key].shape[1]
-        log.info(f"{key}: {smplx_params[key].shape}")
-    log.info(f"TOTAL SMPLX dims: {tot_smplx_dims}\n")
+        timestep_range = (min_t, max_t)
+        frames = max_t - min_t
+        log.info(f"POSES: {n_points}")
+        # checks data has expected shape
+        tot_dims = 0
+        for key in motion_dict:
+            dims = motion_dict[key].shape[1]
+            exp_dims = pose_type_to_dims.get(key)
+            tot_dims += motion_dict[key].shape[1]
+            log.info(f"{key}: {motion_dict[key].shape}, dims {dims}, exp: {exp_dims}")
+        log.info(f"total MOTION-X dims: {tot_dims}\n")
 
-    if not is_inference:
-        action_label_path = pjoin(data_root, 'texts', name + '.txt')
-        action_label = load_label_from_file(action_label_path)
-        emotion_label_path = pjoin(data_root, 'face_texts', name + '.txt')
-        emotion_label = load_label_from_file(emotion_label_path)
-        log.info(f"action: {action_label}")
-        log.info(f"emotion: {emotion_label}")
+        smplx_params = to_smplx_dict(motion_dict, timestep_range)
+        tot_smplx_dims = 0
+        for key in smplx_params:
+            tot_smplx_dims += smplx_params[key].shape[1]
+            log.info(f"{key}: {smplx_params[key].shape}")
+        log.info(f"TOTAL SMPLX dims: {tot_smplx_dims}\n")
 
-    if is_inference:
-        emotion_label = args.prompt.split(' ')[0]
+        if not is_inference:
+            action_label_path = pjoin(data_root, 'texts', name + '.txt')
+            action_label = load_label_from_file(action_label_path)
+            emotion_label_path = pjoin(data_root, 'face_texts', name + '.txt')
+            emotion_label = load_label_from_file(emotion_label_path)
+            log.info(f"action: {action_label}")
+            log.info(f"emotion: {emotion_label}")
+
+        if is_inference:
+            emotion_label = args.prompt.split(' ')[0]
+        
+        if args.display_mesh:
+            model_folder = os.path.join(MY_REPO, MODELS_DIR, "smplx")
+            batch_size = max_t - min_t
+            log.info(f"calculating mesh with batch size {batch_size}")
+            model = smplx.SMPLX(
+                model_folder,
+                use_pca=False, # our joints are not in pca space
+                num_expression_coeffs=NUM_FACIAL_EXPRESSION_DIMS,
+                batch_size=batch_size,
+            )
+            output = model.forward(**smplx_params, return_verts=True)
+            log.info(f"output size {output.vertices.shape}")
+            log.info(f"output size {output.joints.shape}")
+            log.info("rendering mesh")
+            model_name = args.model_path.split('/')[-1] if args.model_path else "ground_truth"
+            gif_path = f"gifs/{model_name}/{name}_{emotion_label}.gif"
+            render_meshes(output, gif_path=gif_path, should_save_gif=args.save_gif)
+            log.warning(
+                "if you don't see the mesh animation, make sure you are running on graphics compatible DTU machine (vgl xterm)."
+            )
     
-    if args.display_mesh:
-        model_folder = os.path.join(MY_REPO, MODELS_DIR, "smplx")
-        batch_size = max_t - min_t
-        log.info(f"calculating mesh with batch size {batch_size}")
-        model = smplx.SMPLX(
-            model_folder,
-            use_pca=False, # our joints are not in pca space
-            num_expression_coeffs=NUM_FACIAL_EXPRESSION_DIMS,
-            batch_size=batch_size,
-        )
-        output = model.forward(**smplx_params, return_verts=True)
-        log.info(f"output size {output.vertices.shape}")
-        log.info(f"output size {output.joints.shape}")
-        log.info("rendering mesh")
-        model_name = args.model_path.split('/')[-1] if args.model_path else "ground_truth"
-        gif_path = f"gifs/{model_name}/{name}_{emotion_label}.gif"
-        render_meshes(output, gif_path=gif_path, should_save_gif=args.save_gif)
-        log.warning(
-            "if you don't see the mesh animation, make sure you are running on graphics compatible DTU machine (vgl xterm)."
-        )
- 
