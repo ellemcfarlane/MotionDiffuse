@@ -48,6 +48,8 @@ if __name__ == '__main__':
     parser.add_argument('--npy_path', type=str, default="", help='Path to save 3D keypoints sequence')
     parser.add_argument('--gpu_id', type=int, default=-1, help="which gpu to use")
     parser.add_argument('--seed', type=int, default=0, help="random seed")
+    # add which_epoch
+    parser.add_argument('--which_epoch', type=str, default="latest", help="which epoch to load")
     args = parser.parse_args()
     
     set_random_seed(args.seed)
@@ -55,10 +57,11 @@ if __name__ == '__main__':
     device = torch.device('cuda:%d' % args.gpu_id if args.gpu_id != -1 else 'cpu')
     opt = get_opt(args.opt_path, device)
     opt.do_denoise = True
+    opt.which_epoch = args.which_epoch
 
     # TODO (elmc): re-enable this
     # assert opt.dataset_name == "t2m"
-    assert args.motion_length <= 196
+    # assert args.motion_length <= 196
     # opt.data_root = './dataset/HumanML3D'
     opt.data_root = './data/GRAB'
     # opt.motion_dir = pjoin(opt.data_root, 'new_joint_vecs')
@@ -88,7 +91,6 @@ if __name__ == '__main__':
     with torch.no_grad():
         if args.motion_length != -1:
             caption = [args.text]
-            import pdb; pdb.set_trace()
             file_name = f"{opt.which_epoch}_{args.motion_length}f.npy"
             m_lens = torch.LongTensor([args.motion_length]).to(device)
             pred_motions = trainer.generate(caption, m_lens, opt.dim_pose)

@@ -2,6 +2,7 @@ import argparse
 import logging as log
 import os
 import time
+from collections import defaultdict
 from os.path import join as pjoin
 from typing import Dict, Optional, Tuple
 
@@ -64,6 +65,22 @@ pose_type_to_dims = {
     "trans": TRANS_DIMS * 1,
 }
 
+def names_to_arrays(root_dir, names, drop_shapes=True):
+    all_arrays = []
+    for name in names:
+        # Load each NumPy array and add it to the list
+        array = np.load(pjoin(f"{root_dir}/joints", f"{name}.npy"))
+        # drop shapes -> 212 dims
+        if drop_shapes:
+            array = drop_shapes_from_motion_arr(array)
+        all_arrays.append(array)
+    return all_arrays
+
+def get_seq_names(file_path):
+    with open(file_path, "r") as f:
+        names = f.readlines()
+    names = [name.strip() for name in names]
+    return names
 
 def get_data_path(dataset_dir: str, seq: str, file: str) -> str:
     # MY_REPO/face_motion_data/smplx_322/GRAB/s1/airplane_fly_1.npy
@@ -143,6 +160,68 @@ def load_label(dataset_dir: str, seq: str, file_path: str) -> Dict[str, str]:
     return {"action": action_label, "emotion": emotion_label}
 
 
+def label_code(full_label):
+    # take first 3 letters of label
+    # surprise -> sur
+    # airplane -> air
+    return full_label[:3]
+
+def get_seq_type(motion_label_dir, file_name):
+    # e.g. s5/airplane_fly_1 -> airplane fly (motion label)
+    seq_type_path = pjoin(motion_label_dir, f"{file_name}.txt")
+    with open(seq_type_path, 'r') as f:
+        seq_type = f.readline().strip()
+    return seq_type
+
+def calc_mean_stddev_pose(arrays):
+    # all_arrays = []
+    # for file_path in file_list:
+    #     # Load each NumPy array and add it to the list
+    #     array = np.load(file_path)
+    #     all_arrays.append(array)
+    
+    # Concatenate all arrays along the first axis (stacking them on top of each other)
+    concatenated_arrays = np.concatenate(arrays, axis=0)
+    # Calculate the mean and standard deviation across all arrays
+    mean = np.mean(concatenated_arrays, axis=0)
+    stddev = np.std(concatenated_arrays, axis=0)
+    
+    return mean, stddev
+
+def get_info_from_file(file_path, emotions_label_dir, motion_label_dir):
+    # train_names = get_seq_names(pjoin(data_dir, "train.txt"))
+    names = get_seq_names(file_path)
+    seq_type_to_emotions = defaultdict(set)
+    emotions_count = defaultdict(int)
+    seq_type_count = defaultdict(int)
+    obj_count = defaultdict(int)
+    code_to_label = {}
+    emotion_to_names = defaultdict(list)
+    for name in names:
+        seq_type = get_seq_type(motion_label_dir, name)
+        emotion = load_label_from_file(pjoin(emotions_label_dir, f"{name}.txt"))
+        object_ = seq_type.split(" ")[0]
+        seq_type_to_emotions[seq_type].add(emotion)
+        emo_code = label_code(emotion)
+        emotions_count[emo_code] += 1
+        seq_type_count[seq_type] += 1
+        obj_code = label_code(object_)
+        obj_count[label_code(object_)] += 1
+        code_to_label[emo_code] = emotion
+        code_to_label[obj_code] = object_
+        emotion_to_names[emo_code].append(name)
+    unique_emotions = set([code_to_label[code] for code in emotions_count])
+    info_dict = {
+        "seq_type_to_emotions": seq_type_to_emotions,
+        "emotions_count": emotions_count,
+        "seq_type_count": seq_type_count,
+        "obj_count": obj_count,
+        "code_to_label": code_to_label,
+        "emotion_to_names": emotion_to_names,
+        "unique_emotions": unique_emotions,
+    }
+    return info_dict 
+
 def to_smplx_dict(motion_dict: Dict[str, Tensor], timestep_range: Optional[Tuple[int, int]] = None) -> Dict[str, Tensor]:
     if timestep_range is None:
         # get all timesteps
@@ -183,10 +262,12 @@ def save_gif(gif_path, gif_frames, duration=0.01):
     else:
         print("No frames to save.")
 
+# based on https://github.com/vchoutas/smplx/blob/main/examples/demo.py
 def render_meshes(output, should_save_gif=False, gif_path=None):
     should_display = not should_save_gif
     vertices_list = output.vertices.detach().cpu().numpy().squeeze()
     joints_list = output.joints.detach().cpu().numpy().squeeze()
+    # TODO (elmc): why do I wrap these in a list again?
     if len(vertices_list.shape) == 2:
         vertices_list = [vertices_list]
         joints_list = [joints_list]
@@ -247,18 +328,18 @@ def render_meshes(output, should_save_gif=False, gif_path=None):
                     ]
                 )
                 # Rotate around X-axis
-                angle = np.radians(80)
+                # Rotate around X-axis
+                angle = np.radians(90)
                 cos_angle = np.cos(angle)
                 sin_angle = np.sin(angle)
-                rot_x_10_deg = np.array([
+                rot_x = np.array([
                     [1, 0,        0,         0],
                     [0, cos_angle, -sin_angle, 0],
                     [0, sin_angle, cos_angle,  0],
                     [0, 0,        0,         1]
                 ])
-                # rotate cam_pose with rot_x_10_deg
-                cam_pose = np.matmul(cam_pose, rot_x_10_deg)
-                cam_pose[:3, 3] += np.array([0, -2.2, -3.0])
+                cam_pose = np.matmul(cam_pose, rot_x)
+                cam_pose[:3, 3] += np.array([0, -2.5, -3.5])
 
                 scene.add(camera, pose=cam_pose)
 
@@ -395,9 +476,11 @@ if __name__ == "__main__":
 
     min_t = args.min_t
     max_t = args.max_t or n_points
+    if max_t > n_points:
+        max_t = n_points
 
     timestep_range = (min_t, max_t)
-
+    frames = max_t - min_t
     log.info(f"POSES: {n_points}")
     # checks data has expected shape
     tot_dims = 0
@@ -422,6 +505,9 @@ if __name__ == "__main__":
         emotion_label = load_label_from_file(emotion_label_path)
         log.info(f"action: {action_label}")
         log.info(f"emotion: {emotion_label}")
+
+    if is_inference:
+        emotion_label = args.prompt.split(' ')[0]
     
     if args.display_mesh:
         model_folder = os.path.join(MY_REPO, MODELS_DIR, "smplx")
@@ -438,8 +524,9 @@ if __name__ == "__main__":
         log.info(f"output size {output.joints.shape}")
         log.info("rendering mesh")
         model_name = args.model_path.split('/')[-1] if args.model_path else "ground_truth"
-        gif_path = f"gifs/{model_name}/{name}_{n_points}f.gif"
+        gif_path = f"gifs/{model_name}/{name}_{emotion_label}_{frames}f.gif"
         render_meshes(output, gif_path=gif_path, should_save_gif=args.save_gif)
         log.warning(
             "if you don't see the mesh animation, make sure you are running on graphics compatible DTU machine (vgl xterm)."
         )
+ 

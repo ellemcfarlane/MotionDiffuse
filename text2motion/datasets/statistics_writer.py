@@ -1,24 +1,8 @@
 from os.path import join as pjoin
 
 import numpy as np
-
-from .motionx_explorer import drop_shapes_from_motion_arr
-
-
-def calc_mean_stddev_pose(arrays):
-    # all_arrays = []
-    # for file_path in file_list:
-    #     # Load each NumPy array and add it to the list
-    #     array = np.load(file_path)
-    #     all_arrays.append(array)
-    
-    # Concatenate all arrays along the first axis (stacking them on top of each other)
-    concatenated_arrays = np.concatenate(arrays, axis=0)
-    # Calculate the mean and standard deviation across all arrays
-    mean = np.mean(concatenated_arrays, axis=0)
-    stddev = np.std(concatenated_arrays, axis=0)
-    
-    return mean, stddev
+from motionx_explorer import (calc_mean_stddev_pose,
+                              drop_shapes_from_motion_arr, get_seq_names)
 
 if __name__ == "__main__":
     # read names from ./data/GRAB/train.txt

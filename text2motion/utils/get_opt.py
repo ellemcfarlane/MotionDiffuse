@@ -49,7 +49,7 @@ def get_opt(opt_path, device):
                 else:
                     opt_dict[key] = str(value)
 
-    opt_dict['which_epoch'] = 'latest'
+    # opt_dict['which_epoch'] = 'latest'
     if 'num_layers' not in opt_dict:
         opt_dict['num_layers'] = 8
     if 'latent_dim' not in opt_dict:
