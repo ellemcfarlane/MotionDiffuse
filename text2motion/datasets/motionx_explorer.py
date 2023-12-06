@@ -47,7 +47,7 @@ NUM_BODY_JOINTS = 23 - 2  # SMPL has hand joints but we're replacing them with m
 NUM_JAW_JOINTS = 1 # 1x3 total jaw dims
 # Motion-X paper says there
 NUM_HAND_JOINTS = 15 # x2 for each hand -> 30x3 total hand dims
-NUM_JOINTS = NUM_BODY_JOINTS + NUM_HAND_JOINTS * 2 + NUM_JAW_JOINTS # 21 + 60 + 1 = 82
+NUM_JOINTS = NUM_BODY_JOINTS + NUM_HAND_JOINTS * 2 + NUM_JAW_JOINTS # 21 + 30 + 1 = 52
 NUM_FACIAL_EXPRESSION_DIMS = 50  # as per Motion-X paper, but why is default 10 in smplx code then?
 FACE_SHAPE_DIMS = 100
 BODY_SHAPE_DIMS = 10 # betas

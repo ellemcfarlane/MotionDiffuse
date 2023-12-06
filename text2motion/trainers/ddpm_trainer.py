@@ -9,15 +9,14 @@ import torch
 # import torch.distributed as dist
 # import torch.nn.functional as F
 import torch.optim as optim
-from mmcv.runner import get_dist_info
-from torch.nn.utils import clip_grad_norm_
-
 import wandb
 from datasets import build_dataloader
+from mmcv.runner import get_dist_info
 from models.gaussian_diffusion import (GaussianDiffusion, LossType,
                                        ModelMeanType, ModelVarType,
                                        create_named_schedule_sampler,
                                        get_named_beta_schedule)
+from torch.nn.utils import clip_grad_norm_
 # from models.transformer import MotionTransformer
 from utils.utils import print_current_loss
 
@@ -223,6 +222,9 @@ class DDPMTrainer(object):
                             'loss_mot_rec': mean_loss['loss_mot_rec']
                         }
                         wandb.log(perf_dict)
+                # TODO (elmc): evaluate!
+                # if it % self.opt.eval_every_e == 0 and rank == 0:
+                #     self.eval_mode()
                     # print(f"noise shape {self.real_noise.shape}")
                     # print(f"real noise: {self.real_noise}")
                     # print(f"fake noise: {self.fake_noise}")
