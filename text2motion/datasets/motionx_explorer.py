@@ -438,7 +438,7 @@ if __name__ == "__main__":
         log.info(f"output size {output.joints.shape}")
         log.info("rendering mesh")
         model_name = args.model_path.split('/')[-1] if args.model_path else "ground_truth"
-        gif_path = f"gifs/{model_name}/{name}.gif"
+        gif_path = f"gifs/{model_name}/{name}_{n_points}f.gif"
         render_meshes(output, gif_path=gif_path, should_save_gif=args.save_gif)
         log.warning(
             "if you don't see the mesh animation, make sure you are running on graphics compatible DTU machine (vgl xterm)."

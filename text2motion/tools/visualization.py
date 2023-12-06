@@ -4,11 +4,10 @@ from os.path import join as pjoin
 
 import numpy as np
 import torch
-from torch.utils.data import DataLoader
-
 import utils.paramUtil as paramUtil
 from datasets.evaluator_models import MotionLenEstimatorBiGRU
 from models import MotionTransformer
+from torch.utils.data import DataLoader
 from trainers import DDPMTrainer
 from utils.get_opt import get_opt
 from utils.motion_process import recover_from_ric
@@ -89,6 +88,8 @@ if __name__ == '__main__':
     with torch.no_grad():
         if args.motion_length != -1:
             caption = [args.text]
+            import pdb; pdb.set_trace()
+            file_name = f"{opt.which_epoch}_{args.motion_length}f.npy"
             m_lens = torch.LongTensor([args.motion_length]).to(device)
             pred_motions = trainer.generate(caption, m_lens, opt.dim_pose)
             motion = pred_motions[0].cpu().numpy()
@@ -99,6 +100,7 @@ if __name__ == '__main__':
             text_no_spaces = args.text.replace(" ", "_")
             if not os.path.exists(args.npy_path):
                 os.makedirs(args.npy_path)
+            file_name = f"{text_no_spaces}_{opt.which_epoch}_{args.motion_length}f.npy"
             full_npy_path = f"{args.npy_path}/{text_no_spaces}.npy"
             with open(full_npy_path, 'wb') as f:
                 print(f"saving output to {full_npy_path}")

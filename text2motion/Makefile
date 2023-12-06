@@ -3,15 +3,16 @@ ROOT_DIR:=$(shell git rev-parse --show-toplevel)/text2motion
 PYTHON_BIN:=/work3/s222376/MotionDiffuseNew/bin/python3
 EXP:=motiondiffuse
 SEED = 42
-MODEL_DIR:=checkpoints/grab/md_noise_norm_small_1gpu_shared_seed42
+MODEL_DIR:=checkpoints/grab/md_fulem_2g_excl_196_seed42
 
 infer:
 # checkpoints/t2m/t2m_motiondiffuse/opt.txt
 	cd ${ROOT_DIR} && ${PYTHON_BIN} -m tools.visualization \
 	--opt_path ${MODEL_DIR}/opt.txt \
-	--text "airplane pass" \
+	--text "happiness airplane pass" \
 	--npy_path ${MODEL_DIR}/outputs \
 	--seed 42 \
+	--motion_length 300 \
 
 eval:
 	cd ${ROOT_DIR} && ${PYTHON_BIN} -m tools.evaluation ${MODEL_DIR}/opt.txt \
@@ -43,11 +44,17 @@ gen:
 	echo "WARNING: run 'make infer' first to generate the npy files for make gen"
 	cd $(ROOT_DIR) && vglrun ${PYTHON_BIN} -m datasets.motionx_explorer \
 	--model_path ${MODEL_DIR} \
-	--prompt "airplane pass" \
+	--prompt "happiness airplane pass" \
 	--display_mesh \
-	--min_t 0 \
-	--max_t 60 \
 	--save_gif \
+
+gen-gui:
+	echo "make sure to run on hpc dtu gui with graphics support and that you use 'vglrun' before python3 call!"
+	echo "WARNING: run 'make infer' first to generate the npy files for make gen"
+	cd $(ROOT_DIR) && vglrun ${PYTHON_BIN} -m datasets.motionx_explorer \
+	--model_path ${MODEL_DIR} \
+	--prompt "happiness airplane pass" \
+	--display_mesh \
 
 aug:
 	cd $(ROOT_DIR) && ${PYTHON_BIN} -m Motion-X.mocap-dataset-process.face_motion_augmentation \
@@ -55,7 +62,7 @@ aug:
 # smpl-x displays poses from seq_file as meshes
 play:
 	cd $(ROOT_DIR) && vglrun ${PYTHON_BIN} -m datasets.motionx_explorer \
-	--seq_file "s5/airplane_pass_1" \
+	--seq_file "s3/airplane_pass_1" \
 	--display_mesh \
 	--save_gif \
 
