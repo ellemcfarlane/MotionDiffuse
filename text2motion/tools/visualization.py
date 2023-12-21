@@ -4,21 +4,19 @@ from os.path import join as pjoin
 
 import numpy as np
 import torch
-from torch.utils.data import DataLoader
 
 import utils.paramUtil as paramUtil
-from datasets.evaluator_models import MotionLenEstimatorBiGRU
 from models import MotionTransformer
 from trainers import DDPMTrainer
 from utils.get_opt import get_opt
 from utils.motion_process import recover_from_ric
 from utils.plot_script import *
 from utils.utils import *
-from utils.word_vectorizer import POS_enumerator, WordVectorizer
+from utils.word_vectorizer import POS_enumerator
 
 
-def plot_t2m(data, result_path, npy_path, caption):
-    joint = recover_from_ric(torch.from_numpy(data).float(), opt.joints_num).numpy()
+def plot_t2m(data, result_path, npy_path, caption, joints_n):
+    joint = recover_from_ric(torch.from_numpy(data).float(), joints_n).numpy()
     joint = motion_temporal_filter(joint, sigma=1)
     plot_3d_motion(result_path, paramUtil.t2m_kinematic_chain, joint, title=caption, fps=20)
     print(f"saving to {result_path}")
@@ -28,7 +26,7 @@ def plot_t2m(data, result_path, npy_path, caption):
         np.save(npy_path, joint)
 
 
-def build_models(opt):
+def get_wordvec_model(opt):
     encoder = MotionTransformer(
         input_feats=opt.dim_pose,
         num_frames=opt.max_motion_length,
@@ -77,7 +75,7 @@ if __name__ == '__main__':
     std = np.load(pjoin(opt.meta_dir, 'std.npy'))
 
     print("Loading word vectorizer...")
-    encoder = build_models(opt).to(device)
+    encoder = get_wordvec_model(opt).to(device)
     print("Loading model...")
     trainer = DDPMTrainer(opt, encoder)
     trainer.load(pjoin(opt.model_dir, opt.which_epoch + '.tar'))

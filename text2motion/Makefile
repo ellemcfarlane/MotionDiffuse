@@ -1,9 +1,9 @@
 # get git root
 ROOT_DIR:=$(shell git rev-parse --show-toplevel)/text2motion
-PYTHON_BIN:=/work3/s222376/MotionDiffuseNew/bin/python3
+PYTHON_BIN:=python3
 EXP:=motiondiffuse
 SEED = 42
-MODEL_DIR:=checkpoints/grab/md_noise_norm_small_1gpu_shared_seed42
+MODEL_DIR:=checkpoints/grab/demo
 
 infer:
 # checkpoints/t2m/t2m_motiondiffuse/opt.txt
@@ -41,9 +41,9 @@ train: w_stats
 gen:
 	echo "make sure to run on hpc dtu gui with graphics support and that you use 'vglrun' before python3 call!"
 	echo "WARNING: run 'make infer' first to generate the npy files for make gen"
-	cd $(ROOT_DIR) && vglrun ${PYTHON_BIN} -m datasets.motionx_explorer \
+	cd $(ROOT_DIR) && ${PYTHON_BIN} -m datasets.motionx_explorer \
 	--model_path ${MODEL_DIR} \
-	--prompt "airplane pass" \
+	--prompt "a_person_walking_happily" \
 	--display_mesh \
 	--min_t 0 \
 	--max_t 60 \
@@ -89,3 +89,6 @@ space:
 
 hog:
 	du -h --max-depth=1 --apparent /work3/s222376/
+
+env_setup:
+	@echo "module load cuda/10.1 cudnn/v7.6.5.32-prod-cuda-10.1 gcc/5.4.0"

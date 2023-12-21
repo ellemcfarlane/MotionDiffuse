@@ -2,11 +2,10 @@ import math
 import os
 import random
 import time
+import torch
 
-import matplotlib.pyplot as plt
 import numpy as np
 import torch as th
-# import cv2
 from PIL import Image
 from scipy.ndimage import gaussian_filter
 
@@ -150,4 +149,8 @@ def motion_temporal_filter(motion, sigma=1):
     for i in range(motion.shape[1]):
         motion[:, i] = gaussian_filter(motion[:, i], sigma=sigma, mode="nearest")
     return motion.reshape(motion.shape[0], -1, 3)
+
+
+def get_device(args):
+    return torch.device('cuda:%d' % args.gpu_id if args.gpu_id != -1 else 'cpu')
 

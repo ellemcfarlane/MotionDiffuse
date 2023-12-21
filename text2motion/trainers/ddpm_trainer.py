@@ -1,27 +1,21 @@
-# import codecs as cs
-import random
 import time
 from collections import OrderedDict
 from os.path import join as pjoin
 
 import numpy as np
 import torch
-# import torch.distributed as dist
-# import torch.nn.functional as F
 import torch.optim as optim
 from mmcv.runner import get_dist_info
 from torch.nn.utils import clip_grad_norm_
 
-import wandb
+# import wandb
 from datasets import build_dataloader
 from models.gaussian_diffusion import (GaussianDiffusion, LossType,
                                        ModelMeanType, ModelVarType,
                                        create_named_schedule_sampler,
                                        get_named_beta_schedule)
-# from models.transformer import MotionTransformer
 from utils.utils import print_current_loss
 
-# from torch.utils.data import DataLoader
 
 
 
@@ -169,6 +163,7 @@ class DDPMTrainer(object):
         return
 
     def load(self, model_dir):
+        print(f'{self.__class__.__name__} loading model {model_dir}')
         checkpoint = torch.load(model_dir, map_location=self.device)
         if self.opt.is_train:
             self.opt_encoder.load_state_dict(checkpoint['opt_encoder'])
@@ -182,7 +177,8 @@ class DDPMTrainer(object):
         it = 0
         cur_epoch = 0
         if self.opt.is_continue:
-            model_dir = pjoin(self.opt.model_dir, 'latest.tar')
+            # model_dir = pjoin(self.opt.model_dir, 'latest.tar')
+            model_dir = pjoin(self.opt.model_dir, f'{self.opt.model_name}.tar')
             cur_epoch, it = self.load(model_dir)
 
         start_time = time.time()
@@ -222,7 +218,7 @@ class DDPMTrainer(object):
                         perf_dict = {
                             'loss_mot_rec': mean_loss['loss_mot_rec']
                         }
-                        wandb.log(perf_dict)
+                        # wandb.log(perf_dict)
                     # print(f"noise shape {self.real_noise.shape}")
                     # print(f"real noise: {self.real_noise}")
                     # print(f"fake noise: {self.fake_noise}")
