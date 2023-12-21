@@ -1,82 +1,37 @@
 <div align="center">
 
-<h1>MotionDiffuse: Text-Driven Human Motion Generation with Diffusion Model</h1>
-
+<h1>Extension of MotionDiffuse for SMPLX features</h1>
+<h3>02456 Deep Learning, DTU Compute, Fall 2023</h3>
 <div>
-    <a href='https://scholar.google.com/citations?user=2QLD4fAAAAAJ&hl=en' target='_blank'>Mingyuan Zhang</a><sup>1</sup>*&emsp;
-    <a href='https://caizhongang.github.io/' target='_blank'>Zhongang Cai</a><sup>1,2</sup>*&emsp;
-    <a href='https://scholar.google.com/citations?user=lSDISOcAAAAJ&hl=zh-CN' target='_blank'>Liang Pan</a><sup>1</sup>&emsp;
-    <a href='https://hongfz16.github.io/' target='_blank'>Fangzhou Hong</a><sup>1</sup>&emsp;
-    <a href='https://gxyes.github.io/' target='_blank'>Xinying Guo</a><sup>1</sup>&emsp;
-    <a href='https://yanglei.me/' target='_blank'>Lei Yang</a><sup>2</sup>&emsp;
-    <a href='https://liuziwei7.github.io/' target='_blank'>Ziwei Liu</a><sup>1+</sup>
+    <a>Elle Mcfarlane</a>&emsp;
+    <a>Alejandro Cirugeda</a>&emsp;
+    <a>Jonathan Mikler</a>&emsp;
+    <a>Menachem Franko</a>&emsp;
 </div>
 <div>
-    <sup>1</sup>S-Lab, Nanyang Technological University&emsp;
-    <sup>2</sup>SenseTime Research&emsp;
-</div>
-<div>
-    *equal contribution&emsp;
-    <sup>+</sup>corresponding author
-</div>
-
-<table>
-<tr>
-    <td align='center' width='24%'>play the guitar</td>
-    <td align='center' width='24%'>walk sadly</td>
-    <td align='center' width='24%'>walk happily</td>
-    <td align='center' width='24%'>check time</td>
-</tr>
-<tr>
-    <td><img src="figures/gallery/gen_00.gif" width="100%"/></td>
-    <td><img src="figures/gallery/gen_03.gif" width="100%"/></td>
-    <td><img src="figures/gallery/gen_05.gif" width="100%"/></td>
-    <td><img src="figures/gallery/gen_06.gif" width="100%"/></td>
-</tr>
-</table>
-
-This repository contains the official implementation of _MotionDiffuse: Text-Driven Human Motion Generation with Diffusion Model_.
-
----
-
+    equal contribution&emsp;
 <h4 align="center">
-  <a href="https://mingyuan-zhang.github.io/projects/MotionDiffuse.html" target='_blank'>[Project Page]</a> •
-  <a href="https://arxiv.org/abs/2208.15001" target='_blank'>[arXiv]</a> •
-  <a href="https://youtu.be/U5PTnw490SA" target='_blank'>[Video]</a> •
-  <a href="https://colab.research.google.com/drive/1Dp6VsZp2ozKuu9ccMmsDjyij_vXfCYb3?usp=sharing" target='_blank'>[Colab Demo]</a> •
-  <a href="https://huggingface.co/spaces/mingyuan/MotionDiffuse" target='_blank'>[Hugging Face Demo]</a>
+  <a href="https://arxiv.org/abs/2208.15001" target='_blank'>[Paper]</a> •
+  <a href="https://github.com/ellemcfarlane/MotionDiffuse" target='_blank'>[Github]</a>
 </h4>
-
 </div>
 
+<div style="display: flex; justify-content: center;">
+    <img src="text2motion/other/denoising.png" alt="De-noising process" style="width: 50%; margin: 0 auto;">
+    <img src="text2motion/other/happy_guy.png" alt="Happy guy" style="width: 40%; margin: 0 auto;">
+</div>
+    
+</div>
 
-## Updates
+## Summary
+Conditioning human motion on natural language (text-to-motion) is critical for many graphics-based applications, including training neural nets for motion-based tasks like detecting changes in posture for medical applications. Recently diffusion models have become popular for text-to-motion generation, but many are trained on human pose representations that lack face and hand details and thus fall short on prompts that involve emotion or detailed object interaction. To fill this gap, we re-trained the text-to-motion model MotionDiffuse on a new dataset Motion-X, which uses SMPL-X poses to include facial expressions and fully articulated hands.
 
-[10/2022] Add a [🤗Hugging Face Demo](https://huggingface.co/spaces/mingyuan/MotionDiffuse) for text-driven motion generation!
+## Installation
+Go to [text2motion/DTU_readme.md](text2motion/dtu_README.md) for installation instructions
 
-[10/2022] Add a [Colab Demo](https://colab.research.google.com/drive/1Dp6VsZp2ozKuu9ccMmsDjyij_vXfCYb3?usp=sharing) for text-driven motion generation! [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Dp6VsZp2ozKuu9ccMmsDjyij_vXfCYb3?usp=sharing)
-
-[10/2022] Code release for text-driven motion generation!
-
-[8/2022] [Paper](https://arxiv.org/abs/2208.15001) uploaded to arXiv. [![arXiv](https://img.shields.io/badge/arXiv-2208.15001-b31b1b.svg)](https://arxiv.org/abs/2208.15001)
-
-## Text-driven Motion Generation
-
-You may refer to [this file](text2motion/README.md) for detailed introduction.
-
-## Citation
-
-If you find our work useful for your research, please consider citing the paper:
-
-```
-@article{zhang2022motiondiffuse,
-  title={MotionDiffuse: Text-Driven Human Motion Generation with Diffusion Model},
-  author={Zhang, Mingyuan and Cai, Zhongang and Pan, Liang and Hong, Fangzhou and Guo, Xinying and Yang, Lei and Liu, Ziwei},
-  journal={arXiv preprint arXiv:2208.15001},
-  year={2022}
-}
-```
+## Demo
+to experience the demo of the model, check the notebook [text2motion/demo.ipynb](text2motion/demo.ipynb). The notebook will guide you through the process of generating a motion from a text prompt. the same code is also available as a python script [text2motion/demo.py](text2motion/demo.py).\
+**Note:** To visualize the output, the `make gen` command must be run from the `text2motion` directory.
 
 ## Acknowledgements
-
-This study is supported by NTU NAP, MOE AcRF Tier 2 (T2EP20221-0033), and under the RIE2020 Industry Alignment Fund – Industry Collaboration Projects (IAF-ICP) Funding Initiative, as well as cash and in-kind contribution from the industry partner(s).
+The group would like to thank the authors of the original paper for their work and for making their code available. Also, a deep thank you to Frederik Warbug, for his support and technical guidance and to the DTU HPC team for their support with the HPC cluster.

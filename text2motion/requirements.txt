@@ -1,6 +1,11 @@
-tqdm
-opencv-python
 scipy
+smplx
+opencv-python
+tqdm
 matplotlib==3.3.1
 spacy
+pyglet==1.5.0
+imageoi
+wandb
+pyrender
 git+https://github.com/openai/CLIP.git

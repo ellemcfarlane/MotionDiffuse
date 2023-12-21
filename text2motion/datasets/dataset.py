@@ -8,8 +8,7 @@ import torch
 from torch.utils import data
 from tqdm import tqdm
 
-from .motionx_explorer import drop_shapes_from_motion_arr, load_label_from_file
-
+from .utils import drop_shapes_from_motion_arr, load_label_from_file
 
 class Text2MotionDataset(data.Dataset):
     """Dataset for Text2Motion generation task.

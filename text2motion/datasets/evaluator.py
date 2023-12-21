@@ -14,7 +14,7 @@ from utils.get_opt import get_opt
 from utils.word_vectorizer import POS_enumerator, WordVectorizer
 
 from .evaluator_models import *
-from .motionx_explorer import drop_shapes_from_motion_arr
+from .utils import drop_shapes_from_motion_arr
 
 
 class EvaluationDataset(Dataset):
